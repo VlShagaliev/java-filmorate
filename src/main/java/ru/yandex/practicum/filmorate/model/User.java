@@ -6,18 +6,17 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDate;
-
+/**
+ * User.
+ */
 @Data
 public class User {
     private int id;
     @NotBlank
-    @NotNull
     @Email
     private String email;
-    @NotNull
     @NotBlank
     private String login;
-    @NotNull
     private String name;
     @NotNull
     private LocalDate birthday;

@@ -1,6 +1,8 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -14,6 +16,7 @@ import java.util.Map;
 @RequestMapping("/films")
 public class FilmController {
     private final Map<Integer, Film> films = new HashMap<>();
+    private final static Logger log = LoggerFactory.getLogger(Film.class);
 
     @GetMapping
     public Collection<Film> films(){
@@ -22,13 +25,13 @@ public class FilmController {
 
     @PostMapping
     public Film addFilm(@Valid @RequestBody Film film){
-        vaildFilm(film);
+        validFilm(film);
         film.setId(films.size()+1);
         films.put(film.getId(), film);
         return film;
     }
 
-    private void vaildFilm(Film film){
+    private void validFilm(Film film){
         if (film.getName().isEmpty()){
             throw new ValidationException("Название не может быть пустым");
         }
@@ -45,7 +48,7 @@ public class FilmController {
 
     @PutMapping
     public Film update(@Valid @RequestBody Film film){
-        vaildFilm(film);
+        validFilm(film);
         if (film.getId() <= 0){
             throw new ValidationException("Отсутствует id фильма");
         }
