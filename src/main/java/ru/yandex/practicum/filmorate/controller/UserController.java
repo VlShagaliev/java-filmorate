@@ -41,12 +41,12 @@ public class UserController {
             log.warn("Логин не может содержать пробелы: {}", user.getLogin());
             throw new ValidationException("Логин не может содержать пробелы");
         }
-        if(user.getBirthday().isAfter(LocalDate.now())) {
+        if (user.getBirthday().isAfter(LocalDate.now())) {
             log.warn("Дата рождения не может быть в будущем: {}. Текущее время: {}",
                     user.getBirthday(), LocalDate.now());
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
-        if(user.getName() == null) {
+        if (user.getName() == null) {
             log.info("Имя пустое, присваиваем имя=логин: {}", user.getLogin());
             user.setName(user.getLogin());
         }
