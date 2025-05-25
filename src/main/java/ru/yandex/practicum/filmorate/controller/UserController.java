@@ -16,7 +16,7 @@ import java.util.Map;
 @RequestMapping("/users")
 public class UserController {
     private final Map<Integer, User> users = new HashMap<>();
-    private final static Logger log = LoggerFactory.getLogger(User.class);
+    private final Logger log = LoggerFactory.getLogger(User.class);
 
     @GetMapping
     public Collection<User> users(){
@@ -25,36 +25,45 @@ public class UserController {
 
     @PostMapping
     public User addUser(@Valid @RequestBody User user){
-        validUser(user);
+        validateUser(user);
         user.setId(users.size()+1);
         users.put(user.getId(), user);
+        log.info("Добавлен пользователь: {}", user);
         return user;
     }
 
-    private void validUser(User user){
+    private void validateUser(User user){
         if (user.getEmail().isEmpty() || !user.getEmail().contains("@")){
+            log.warn("Электронная почта не может быть пустой и должна содержать символ @: {}", user.getEmail());
             throw new ValidationException("Электронная почта не может быть пустой и должна содержать символ @");
         }
         if (user.getLogin().contains(" ")){
+            log.warn("Логин не может содержать пробелы: {}", user.getLogin());
             throw new ValidationException("Логин не может содержать пробелы");
         }
         if(user.getBirthday().isAfter(LocalDate.now())){
+            log.warn("Дата рождения не может быть в будущем: {}. Текущее время: {}",
+                    user.getBirthday(), LocalDate.now());
             throw new ValidationException("Дата рождения не может быть в будущем");
         }
         if(user.getName() == null){
+            log.info("Имя пустое, присваиваем имя=логин: {}", user.getLogin());
             user.setName(user.getLogin());
         }
     }
 
     @PutMapping
     public User update(@Valid @RequestBody User user){
-        validUser(user);
+        validateUser(user);
         if (user.getId() <= 0){
+            log.warn("При обновлении отсутствует id пользователя: {}", user.getId());
             throw new ValidationException("Отсутствует id пользователя");
         }
         if (users.containsKey(user.getId())){
+            log.info("Данные пользователя успешно обновлены: {}", user);
             users.put(user.getId(), user);
         } else {
+            log.warn("Пользователь с id = {} отсутствует в списке", user.getId());
             throw new ValidationException("Пользователь с данным id отсутствует в списке");
         }
         return user;
