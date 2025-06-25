@@ -27,6 +27,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         log.info("Добавлен фильм: {}", film);
         return film;
     }
+
     @Override
     public Film get(int id) {
         if (films.containsKey(id))
@@ -50,6 +51,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         }
         return film;
     }
+
     @Override
     public Collection<Film> films() {
         return films.values();
@@ -73,6 +75,4 @@ public class InMemoryFilmStorage implements FilmStorage {
             throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
     }
-
-
 }
