@@ -16,26 +16,32 @@ public class UserService {
     private final UserStorage userStorage;
 
     public User addFriend(int id, int friendId) {
-        User userId = userStorage.get(id);
-        userId.getFriends().add(friendId);
-        User userFriendId = userStorage.get(friendId);
-        userFriendId.getFriends().add(id);
-        return userId;
+        if (userStorage.get(id) != null && userStorage.get(friendId) != null) {
+            User userId = userStorage.get(id);
+            userId.getFriends().add(friendId);
+            User userFriendId = userStorage.get(friendId);
+            userFriendId.getFriends().add(id);
+            return userId;
+        }
+        throw new NotFoundException("Пользователь с данным id отсутствует в списке");
     }
 
     public User deleteFriend(int id, int friendId) {
-        User userId = userStorage.get(id);
-        userId.getFriends().remove(friendId);
-        User userFriendId = userStorage.get(friendId);
-        userFriendId.getFriends().remove(id);
-        return userId;
+        if (userStorage.get(id) != null && userStorage.get(friendId) != null) {
+            User userId = userStorage.get(id);
+            userId.getFriends().remove(friendId);
+            User userFriendId = userStorage.get(friendId);
+            userFriendId.getFriends().remove(id);
+            return userId;
+        }
+        throw new NotFoundException("Пользователь с данным id отсутствует в списке");
     }
 
     public Collection<User> userFriends(int id) {
         if (userStorage.get(id) != null)
             return userStorage.users().stream()
-                .filter(user -> user.getFriends().contains(id))
-                .toList();
+                    .filter(user -> user.getFriends().contains(id))
+                    .toList();
         throw new NotFoundException("Пользователь с данным id отсутствует в списке");
     }
 
@@ -43,9 +49,9 @@ public class UserService {
         User otherUser = userStorage.get(otherId);
         return userStorage.users().stream()
                 .filter(user -> userStorage.get(id).getFriends().stream()
-                                    .filter(userId -> otherUser.getFriends().contains(userId))
-                                    .toList()
-                                    .contains(user.getId()))
+                        .filter(userId -> otherUser.getFriends().contains(userId))
+                        .toList()
+                        .contains(user.getId()))
                 .toList();
     }
 }
