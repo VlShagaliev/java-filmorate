@@ -24,7 +24,7 @@ class FilmorateApplicationTests {
     private UserController userController;
 
     @BeforeEach
-    public void clear(){
+    public void clear() {
         userController.users().clear();
         filmController.films().clear();
     }
