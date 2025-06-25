@@ -42,7 +42,7 @@ public class UserService {
     public Collection<User> mutualFriends(int id, int otherId) {
         User otherUser = userStorage.get(otherId);
         return userStorage.users().stream()
-                .filter( user -> userStorage.get(id).getFriends().stream()
+                .filter(user -> userStorage.get(id).getFriends().stream()
                                     .filter(userId -> otherUser.getFriends().contains(userId))
                                     .toList()
                                     .contains(user.getId()))
