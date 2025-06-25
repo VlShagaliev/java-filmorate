@@ -148,7 +148,7 @@ class FilmorateApplicationTests {
         user.setName("Test Name");
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        User result = userController.addUser(user);
+        User result = userController.add(user);
 
         assertNotNull(result);
         assertEquals(1, result.getId());
@@ -165,7 +165,7 @@ class FilmorateApplicationTests {
         user.setLogin("test");
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        assertThrows(ValidationException.class, () -> userController.add(user));
     }
 
     @Test
@@ -175,7 +175,7 @@ class FilmorateApplicationTests {
         user.setLogin("test");
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        assertThrows(ValidationException.class, () -> userController.add(user));
     }
 
     @Test
@@ -185,7 +185,7 @@ class FilmorateApplicationTests {
         user.setLogin("Test with spaces");
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        assertThrows(ValidationException.class, () -> userController.add(user));
     }
 
     @Test
@@ -195,7 +195,7 @@ class FilmorateApplicationTests {
         user.setLogin("test");
         user.setBirthday(LocalDate.now().plusDays(1));
 
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        assertThrows(ValidationException.class, () -> userController.add(user));
     }
 
     @Test
@@ -206,7 +206,7 @@ class FilmorateApplicationTests {
         // Name не установлено
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        User result = userController.addUser(user);
+        User result = userController.add(user);
 
         assertEquals("test", result.getName());
     }
@@ -218,7 +218,7 @@ class FilmorateApplicationTests {
         user.setEmail("test@example.com");
         user.setLogin("test");
         user.setBirthday(LocalDate.of(1990, 1, 1));
-        userController.addUser(user);
+        userController.add(user);
 
         // Обновляем пользователя
         User updated = new User();
