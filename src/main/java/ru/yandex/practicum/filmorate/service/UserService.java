@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
@@ -10,10 +11,10 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 import java.util.Collection;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    @Autowired
     @Getter
-    UserStorage userStorage;
+    private final UserStorage userStorage;
 
     public User addFriend(int id, int friendId) {
         User userId = userStorage.get(id);
