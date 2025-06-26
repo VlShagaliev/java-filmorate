@@ -2,9 +2,11 @@ package ru.yandex.practicum.filmorate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.controller.FilmController;
 import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
@@ -16,13 +18,15 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 class FilmorateApplicationTests {
 
+    @Autowired
     private FilmController filmController;
+    @Autowired
     private UserController userController;
 
     @BeforeEach
-    public void setUp() {
-        filmController = new FilmController();
-        userController = new UserController();
+    public void clear() {
+        userController.users().clear();
+        filmController.films().clear();
     }
 
     @Test
@@ -111,7 +115,7 @@ class FilmorateApplicationTests {
     }
 
     @Test
-    public void testUpdate_FilmNotExist_ShouldThrowValidationException() {
+    public void testUpdate_FilmNotExist_ShouldThrowNotFoundException() {
         Film nonExistent = new Film();
         nonExistent.setId(999);
         nonExistent.setName("Фильм");
@@ -119,10 +123,10 @@ class FilmorateApplicationTests {
         nonExistent.setReleaseDate(LocalDate.of(2000, 1, 1));
         nonExistent.setDuration(100);
 
-        Exception exception = assertThrows(ValidationException.class,
+        Exception exception = assertThrows(NotFoundException.class,
                 () -> filmController.update(nonExistent));
 
-        assertEquals("Фильм отсутствует в списке", exception.getMessage());
+        assertEquals("Фильм с id = 999 отсутствует в списке", exception.getMessage());
     }
 
     @Test
@@ -137,7 +141,7 @@ class FilmorateApplicationTests {
         Exception exception = assertThrows(ValidationException.class,
                 () -> filmController.update(invalidId));
 
-        assertEquals("Отсутствует id фильма", exception.getMessage());
+        assertEquals("Отсутствует id фильма: -1", exception.getMessage());
     }
 
     @Test
@@ -148,7 +152,7 @@ class FilmorateApplicationTests {
         user.setName("Test Name");
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        User result = userController.addUser(user);
+        User result = userController.add(user);
 
         assertNotNull(result);
         assertEquals(1, result.getId());
@@ -165,7 +169,7 @@ class FilmorateApplicationTests {
         user.setLogin("test");
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        assertThrows(ValidationException.class, () -> userController.add(user));
     }
 
     @Test
@@ -175,7 +179,7 @@ class FilmorateApplicationTests {
         user.setLogin("test");
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        assertThrows(ValidationException.class, () -> userController.add(user));
     }
 
     @Test
@@ -185,7 +189,7 @@ class FilmorateApplicationTests {
         user.setLogin("Test with spaces");
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        assertThrows(ValidationException.class, () -> userController.add(user));
     }
 
     @Test
@@ -195,18 +199,19 @@ class FilmorateApplicationTests {
         user.setLogin("test");
         user.setBirthday(LocalDate.now().plusDays(1));
 
-        assertThrows(ValidationException.class, () -> userController.addUser(user));
+        assertThrows(ValidationException.class, () -> userController.add(user));
     }
 
     @Test
     public void testAddUser_NameNull_ShouldSetLoginAsName() {
         User user = new User();
+
         user.setEmail("test@example.com");
         user.setLogin("test");
         // Name не установлено
         user.setBirthday(LocalDate.of(1990, 1, 1));
 
-        User result = userController.addUser(user);
+        User result = userController.add(user);
 
         assertEquals("test", result.getName());
     }
@@ -218,7 +223,7 @@ class FilmorateApplicationTests {
         user.setEmail("test@example.com");
         user.setLogin("test");
         user.setBirthday(LocalDate.of(1990, 1, 1));
-        userController.addUser(user);
+        userController.add(user);
 
         // Обновляем пользователя
         User updated = new User();
@@ -235,17 +240,17 @@ class FilmorateApplicationTests {
     }
 
     @Test
-    public void testUserUpdate_UserNotExist_ShouldThrowValidationException() {
+    public void testUserUpdate_UserNotExist_ShouldThrowNotFoundException() {
         User nonExistent = new User();
         nonExistent.setId(999);
         nonExistent.setEmail("email@example.com");
         nonExistent.setLogin("test");
         nonExistent.setBirthday(LocalDate.of(1990, 1, 1));
 
-        Exception exception = assertThrows(ValidationException.class,
+        Exception exception = assertThrows(NotFoundException.class,
                 () -> userController.update(nonExistent));
 
-        assertEquals("Пользователь с данным id отсутствует в списке", exception.getMessage());
+        assertEquals("Пользователь с данным id = 999 отсутствует в списке", exception.getMessage());
     }
 
     @Test
