@@ -126,7 +126,7 @@ class FilmorateApplicationTests {
         Exception exception = assertThrows(NotFoundException.class,
                 () -> filmController.update(nonExistent));
 
-        assertEquals("Фильм отсутствует в списке", exception.getMessage());
+        assertEquals("Фильм с id = 999 отсутствует в списке", exception.getMessage());
     }
 
     @Test
@@ -141,7 +141,7 @@ class FilmorateApplicationTests {
         Exception exception = assertThrows(ValidationException.class,
                 () -> filmController.update(invalidId));
 
-        assertEquals("Отсутствует id фильма", exception.getMessage());
+        assertEquals("Отсутствует id фильма: -1", exception.getMessage());
     }
 
     @Test
@@ -250,7 +250,7 @@ class FilmorateApplicationTests {
         Exception exception = assertThrows(NotFoundException.class,
                 () -> userController.update(nonExistent));
 
-        assertEquals("Пользователь с данным id отсутствует в списке", exception.getMessage());
+        assertEquals("Пользователь с данным id = 999 отсутствует в списке", exception.getMessage());
     }
 
     @Test
