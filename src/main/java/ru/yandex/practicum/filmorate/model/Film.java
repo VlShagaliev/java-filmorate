@@ -26,5 +26,7 @@ public class Film {
     @Positive
     @Min(value = 1, message = "Продолжительность фильма должна быть положительной")
     private int duration;
-    private final Set<User> likeCount = new HashSet<>();
+    private final Set<User> likeFrom = new HashSet<>();
+    private Set<Genre> genres = new HashSet<>();
+    private Set<Rating> ratings = new HashSet<>();
 }
