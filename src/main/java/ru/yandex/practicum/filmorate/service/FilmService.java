@@ -42,19 +42,19 @@ public class FilmService {
 
     public Film addLike(int id, int userId) {
         Film filmId = filmStorage.get(id);
-        filmId.getLikeCount().add(userStorage.get(userId));
+        filmId.getLikeFrom().add(userStorage.get(userId));
         return filmId;
     }
 
     public Film deleteLike(int id, int userId) {
         Film filmId = filmStorage.get(id);
-        filmId.getLikeCount().remove(userStorage.get(userId));
+        filmId.getLikeFrom().remove(userStorage.get(userId));
         return filmId;
     }
 
     public Collection<Film> printTenMostPopular(int count) {
         return filmStorage.films().stream()
-                .sorted(Comparator.comparingInt((Film film) -> film.getLikeCount().size()).reversed())
+                .sorted(Comparator.comparingInt((Film film) -> film.getLikeFrom().size()).reversed())
                 .limit(count)
                 .toList();
     }
