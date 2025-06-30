@@ -47,7 +47,7 @@ public class UserDbStorage implements UserStorage {
         }
     }
 
-    private void UpdateSql(String query, Object... params) {
+    private void updateSql(String query, Object... params) {
         int rowsUpdated = jdbc.update(query, params);
         if (rowsUpdated == 0) {
             throw new InternalServerException("Не удалось обновить данные");
@@ -70,7 +70,7 @@ public class UserDbStorage implements UserStorage {
     @Override
     public User update(User user) {
         checkDbHasId(user.getId());
-        UpdateSql(
+        updateSql(
                 UPDATE_QUERY,
                 user.getName(),
                 user.getLogin(),
@@ -116,7 +116,7 @@ public class UserDbStorage implements UserStorage {
         boolean status = false;
         if (check != null && check != 0) {
             status = true;
-            UpdateSql("UPDATE friends SET status = ? WHERE _from = ? AND _to = ?", status, id, friendId);
+            updateSql("UPDATE friends SET status = ? WHERE _from = ? AND _to = ?", status, id, friendId);
         }
         insert(ADD_FRIEND, id, friendId, status);
         User user = get(id);
