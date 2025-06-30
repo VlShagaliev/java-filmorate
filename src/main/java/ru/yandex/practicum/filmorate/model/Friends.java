@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class Friends {
-    private Integer _to;
+    private Integer to;
     private boolean status;
 }
