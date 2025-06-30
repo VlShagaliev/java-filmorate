@@ -17,8 +17,8 @@ public class FriendDbStorage {
         return jdbc.query(GET_FRIENDS_BY_ID, rs -> {
             Set<Integer> map = new HashSet<>();
             while (rs.next()) {
-                int _to = rs.getInt("_to");
-                map.add(_to);
+                int to = rs.getInt("_to");
+                map.add(to);
             }
             return map;
         }, id);
