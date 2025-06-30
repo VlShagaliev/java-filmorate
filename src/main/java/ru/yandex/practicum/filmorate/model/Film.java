@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
@@ -7,8 +8,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Film.
@@ -26,7 +25,8 @@ public class Film {
     @Positive
     @Min(value = 1, message = "Продолжительность фильма должна быть положительной")
     private int duration;
-    private final Set<User> likeFrom = new HashSet<>();
-    private Set<Genre> genres = new HashSet<>();
-    private Set<Rating> ratings = new HashSet<>();
+    private Integer countLikes;
+    private Genre[] genres;
+    @JsonProperty(value = "mpa")
+    private Rating rating;
 }
