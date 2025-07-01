@@ -1,30 +1,22 @@
 package ru.yandex.practicum.filmorate.dao;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Rating;
 
 import java.util.Collection;
 
 @Repository
-@RequiredArgsConstructor
-public class RatingDbStorage {
-    private final JdbcTemplate jdbc;
-    private final RowMapper<Rating> mapper;
+public class RatingDbStorage extends BaseDbStorage<Rating> {
+    private static final String CHECK_RATING_IN_DB = "SELECT COUNT(*) FROM ratings WHERE id = ?";
 
-    public void checkDbHasId(int id) {
-        String checkSql = "SELECT COUNT(*) FROM ratings WHERE id = ?";
-        Integer check = jdbc.queryForObject(checkSql, Integer.class, id);
-        if (check == 0 || check == null) {
-            throw new NotFoundException(String.format("Рейтинг с данным id = %d отсутствует в списке", id));
-        }
+    public RatingDbStorage(JdbcTemplate jdbc, RowMapper<Rating> mapper) {
+        super(jdbc, mapper);
     }
 
     public Rating getRatingById(int id) {
-        checkDbHasId(id);
+        checkDbHasId(CHECK_RATING_IN_DB, id);
         return jdbc.queryForObject("SELECT id, name FROM ratings WHERE id = ?", mapper, id);
     }
 

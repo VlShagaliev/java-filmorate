@@ -46,9 +46,9 @@ CREATE TABLE IF NOT EXISTS likes (
 
 -- Таблица films_genres
 CREATE TABLE IF NOT EXISTS films_genres (
-    id SERIAL PRIMARY KEY,
     id_film INTEGER REFERENCES films(id),
-    id_genre INTEGER REFERENCES genres(id)
+    id_genre INTEGER REFERENCES genres(id),
+    PRIMARY KEY (id_film, id_genre)
 );
 
 MERGE INTO genres(name) KEY (name) VALUES ('Комедия');

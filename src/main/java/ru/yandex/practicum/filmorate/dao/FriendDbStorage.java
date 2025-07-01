@@ -1,17 +1,20 @@
 package ru.yandex.practicum.filmorate.dao;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.model.Friends;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @Repository
-@RequiredArgsConstructor
-public class FriendDbStorage {
+public class FriendDbStorage extends BaseDbStorage<Friends> {
     private static final String GET_FRIENDS_BY_ID = "SELECT _to, status FROM friends WHERE _from = ?";
-    private final JdbcTemplate jdbc;
+
+    public FriendDbStorage(JdbcTemplate jdbc, RowMapper<Friends> mapper) {
+        super(jdbc, mapper);
+    }
 
     public Set<Integer> getFriends(int id) {
         return jdbc.query(GET_FRIENDS_BY_ID, rs -> {

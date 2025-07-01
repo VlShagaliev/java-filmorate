@@ -20,6 +20,8 @@ public class FilmRowMapper implements RowMapper<Film> {
         film.setDuration(resultSet.getInt("duration"));
         Rating rating = new Rating();
         rating.setId(resultSet.getInt("id_rating"));
+        rating.setName(resultSet.getString("rating_name"));
+        film.setCountLikes(resultSet.getInt("likes_count"));
         film.setRating(rating);
         return film;
     }

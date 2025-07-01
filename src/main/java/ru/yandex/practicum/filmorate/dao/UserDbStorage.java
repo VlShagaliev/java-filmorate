@@ -1,23 +1,18 @@
 package ru.yandex.practicum.filmorate.dao;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.stereotype.Repository;
-import ru.yandex.practicum.filmorate.exceptions.InternalServerException;
+import ru.yandex.practicum.filmorate.dao.mappers.FriendsRowMapper;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.util.Collection;
 import java.util.Set;
 
 @Repository
-@RequiredArgsConstructor
-public class UserDbStorage implements UserStorage {
+public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     private static final String INSERT_QUERY = "INSERT INTO users(name, login, email, birthday) " +
             "VALUES (?, ?, ?, ?)";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE id = ?";
@@ -25,33 +20,13 @@ public class UserDbStorage implements UserStorage {
     private static final String UPDATE_QUERY = "UPDATE users SET name = ?, login = ?, email = ?, birthday = ? WHERE id = ?";
     private static final String ADD_FRIEND = "INSERT INTO friends(_from, _to,status) " +
             "VALUES (?, ?, ?)";
-    private final JdbcTemplate jdbc;
-    private final RowMapper<User> mapper;
 
-    private Integer insert(String query, Object... params) {
-        GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(connection -> {
-            PreparedStatement ps = connection
-                    .prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-            for (int idx = 0; idx < params.length; idx++) {
-                ps.setObject(idx + 1, params[idx]);
-            }
-            return ps;
-        }, keyHolder);
 
-        Integer id = keyHolder.getKeyAs(Integer.class);
-        if (id != null) {
-            return id;
-        } else {
-            throw new InternalServerException("Не удалось сохранить данные");
-        }
-    }
+    private final FriendDbStorage friendDbStorage;
 
-    private void updateSql(String query, Object... params) {
-        int rowsUpdated = jdbc.update(query, params);
-        if (rowsUpdated == 0) {
-            throw new InternalServerException("Не удалось обновить данные");
-        }
+    public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
+        super(jdbc, mapper);
+        friendDbStorage = new FriendDbStorage(jdbc, new FriendsRowMapper());
     }
 
     @Override
@@ -69,7 +44,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User update(User user) {
-        checkDbHasId(user.getId());
+        checkDbHasId(CHECK_USED_IN_DB, user.getId());
         updateSql(
                 UPDATE_QUERY,
                 user.getName(),
@@ -88,7 +63,7 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public User get(int id) {
-        checkDbHasId(id);
+        checkDbHasId(CHECK_USED_IN_DB, id);
         return jdbc.queryForObject(FIND_BY_ID_QUERY, mapper, id);
     }
 
@@ -101,16 +76,16 @@ public class UserDbStorage implements UserStorage {
     }
 
     public User deleteFriend(int id, int friendId) {
-        checkDbHasId(id);
-        checkDbHasId(friendId);
+        checkDbHasId(CHECK_USED_IN_DB, id);
+        checkDbHasId(CHECK_USED_IN_DB, friendId);
         String querySql = "DELETE FROM friends WHERE _from = ? AND _to = ?";
         jdbc.update(querySql, id, friendId);
         return get(id);
     }
 
     public User addFriend(int id, int friendId) {
-        checkDbHasId(id);
-        checkDbHasId(friendId);
+        checkDbHasId(CHECK_USED_IN_DB, id);
+        checkDbHasId(CHECK_USED_IN_DB, friendId);
         String checkSql = "SELECT COUNT(status) FROM friends WHERE _from = ? AND _to = ?";
         Integer check = jdbc.queryForObject(checkSql, Integer.class, id, friendId);
         boolean status = false;
@@ -125,8 +100,7 @@ public class UserDbStorage implements UserStorage {
     }
 
     public Collection<User> getFriends(int id) {
-        checkDbHasId(id);
-        FriendDbStorage friendDbStorage = new FriendDbStorage(jdbc);
+        checkDbHasId(CHECK_USED_IN_DB, id);
         Set<Integer> friends = friendDbStorage.getFriends(id);
         return friends.stream()
                 .map(idFriends -> {
@@ -138,9 +112,9 @@ public class UserDbStorage implements UserStorage {
     }
 
     public Collection<User> mutualFriends(int id, int otherId) {
-        checkDbHasId(id);
-        checkDbHasId(otherId);
-        FriendDbStorage friendDbStorage = new FriendDbStorage(jdbc);
+        checkDbHasId(CHECK_USED_IN_DB, id);
+        checkDbHasId(CHECK_USED_IN_DB, otherId);
+
         Set<Integer> friendsId = friendDbStorage.getFriends(id);
         Set<Integer> friendsOtherId = friendDbStorage.getFriends(otherId);
         return friendsId.stream()

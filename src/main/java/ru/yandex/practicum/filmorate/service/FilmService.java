@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dao.BaseDbStorage;
 import ru.yandex.practicum.filmorate.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.dao.LikesDbStorage;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
@@ -35,7 +36,7 @@ public class FilmService {
 
     public Film update(Film film) {
         validateFilm(film);
-        filmDbStorage.checkDbHasId(film.getId());
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, film.getId());
         Film film1 = filmDbStorage.update(film);
         log.info("Фильм обновлен: {}", film1);
         return film1;
