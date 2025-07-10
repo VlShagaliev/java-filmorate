@@ -51,6 +51,24 @@ CREATE TABLE IF NOT EXISTS films_genres (
     PRIMARY KEY (id_film, id_genre)
 );
 
+-- Таблица reviews
+CREATE TABLE IF NOT EXISTS reviews (
+    id SERIAL PRIMARY KEY,
+    id_film INTEGER REFERENCES films(id),
+    id_user INTEGER REFERENCES users(id),
+    content VARCHAR NOT NULL,
+    useful INTEGER NOT NULL,
+    is_positive BOOLEAN
+);
+
+-- Таблица reviews_likes
+CREATE TABLE IF NOT EXISTS reviews_likes (
+    id_user INTEGER REFERENCES users(id),
+    id_review INTEGER REFERENCES reviews(id) ON DELETE CASCADE,
+    is_useful BOOLEAN,
+    PRIMARY KEY (id_user, id_review)
+);
+
 MERGE INTO genres(name) KEY (name) VALUES ('Комедия');
 MERGE INTO genres(name) KEY (name) VALUES ('Драма');
 MERGE INTO genres(name) KEY (name) VALUES ('Мультфильм');
