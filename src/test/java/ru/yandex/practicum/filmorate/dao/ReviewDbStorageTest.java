@@ -39,10 +39,10 @@ public class ReviewDbStorageTest {
 
         String clearTablesQuery = Files.readString(path);
         String addTestContentQuery = """  
-                    INSERT INTO films (name, description, releaseDate, duration, id_rating)
-                        VALUES ('name1', 'description1', '2001-01-01', 100, 1);
-                    INSERT INTO users (login, name, email, birthday)
-                        VALUES ('login1', 'name1', 'user1@domain.com', '2001-01-01');
+                INSERT INTO films (name, description, releaseDate, duration, id_rating)
+                VALUES ('name1', 'description1', '2001-01-01', 100, 1);
+                INSERT INTO users (login, name, email, birthday)
+                VALUES ('login1', 'name1', 'user1@domain.com', '2001-01-01');
         """;
         jdbc.update(clearTablesQuery);
         jdbc.update(addTestContentQuery);
