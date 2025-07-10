@@ -38,7 +38,7 @@ public class ReviewDbStorageTest {
         review.setUseful(0);
 
         String clearTablesQuery = Files.readString(path);
-        String addTestContentQuery = """  
+        String addTestContentQuery = """
                 INSERT INTO films (name, description, releaseDate, duration, id_rating)
                 VALUES ('name1', 'description1', '2001-01-01', 100, 1);
                 INSERT INTO users (login, name, email, birthday)
