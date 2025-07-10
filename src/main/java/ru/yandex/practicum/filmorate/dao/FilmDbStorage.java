@@ -86,6 +86,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return film;
     }
 
+    public void deleteFilm(int id) {
+        String sql = "DELETE FROM films WHERE id = ?";
+        updateSql(sql, id);
+    }
+
     private Film genresUpdate(Film film) {
         Genre[] genres = film.getGenres();
         jdbc.batchUpdate(INSERT_QUERY_FILMS_GENRE, new BatchPreparedStatementSetter() {

@@ -56,6 +56,11 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         return user;
     }
 
+    public void delete(int id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        updateSql(sql, id);
+    }
+
     @Override
     public Collection<User> users() {
         return jdbc.query(FIND_ALL_QUERY, mapper);

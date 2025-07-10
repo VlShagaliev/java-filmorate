@@ -32,21 +32,21 @@ CREATE TABLE IF NOT EXISTS users (
 -- Таблица friends
 CREATE TABLE IF NOT EXISTS friends (
     id SERIAL PRIMARY KEY,
-    _from INTEGER REFERENCES users(id),
-    _to INTEGER REFERENCES users(id),
+    _from INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    _to INTEGER REFERENCES users(id) ON DELETE CASCADE,
     status BOOLEAN
 );
 
 -- Таблица likes
 CREATE TABLE IF NOT EXISTS likes (
     id SERIAL PRIMARY KEY,
-    id_film INTEGER REFERENCES films(id),
-    id_user INTEGER REFERENCES users(id)
+    id_film INTEGER REFERENCES films(id) ON DELETE CASCADE,
+    id_user INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Таблица films_genres
 CREATE TABLE IF NOT EXISTS films_genres (
-    id_film INTEGER REFERENCES films(id),
+    id_film INTEGER REFERENCES films(id) ON DELETE CASCADE,
     id_genre INTEGER REFERENCES genres(id),
     PRIMARY KEY (id_film, id_genre)
 );
