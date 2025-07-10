@@ -44,11 +44,10 @@ public class BaseDbStorage<T> {
         }
     }
 
-    public void checkDbHasId(String requestSql, int id) {
-        String checkSql = "SELECT COUNT(*) FROM users WHERE id = ?";
+    public void checkDbHasId(String requestSql, int id, String message) {
         Integer check = jdbc.queryForObject(requestSql, Integer.class, id);
         if (check == 0 || check == null) {
-            throw new NotFoundException(String.format("Пользователь с данным id = %d отсутствует в списке", id));
+            throw new NotFoundException(String.format(message, id));
         }
     }
 

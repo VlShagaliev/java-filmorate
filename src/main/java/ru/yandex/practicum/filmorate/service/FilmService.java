@@ -36,7 +36,7 @@ public class FilmService {
 
     public Film update(Film film) {
         validateFilm(film);
-        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, film.getId());
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, film.getId(), "Фильм с данным id = %d отсутствует в списке");
         Film film1 = filmDbStorage.update(film);
         log.info("Фильм обновлен: {}", film1);
         return film1;
@@ -79,5 +79,14 @@ public class FilmService {
 
     public Film getFilmById(int id) {
         return filmDbStorage.get(id);
+    }
+
+
+    public Collection<Film> getFilmSorted(int directorId, String typeSort) {
+        switch (typeSort) {
+            case "year": return filmDbStorage.getFilmsSortedByYear(directorId);
+            case "likes": return filmDbStorage.getFilmsSortedByLikes(directorId);
+            default: throw new RuntimeException("Неизвестная команда сортировки!");
+        }
     }
 }

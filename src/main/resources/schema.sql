@@ -51,6 +51,17 @@ CREATE TABLE IF NOT EXISTS films_genres (
     PRIMARY KEY (id_film, id_genre)
 );
 
+CREATE TABLE IF NOT EXISTS director (
+    id SERIAL PRIMARY KEY,
+    name varchar
+);
+
+CREATE TABLE IF NOT EXISTS film_director (
+    id_film INTEGER REFERENCES films(id),
+    id_director INTEGER REFERENCES director(id),
+    PRIMARY KEY (id_film, id_director)
+);
+
 MERGE INTO genres(name) KEY (name) VALUES ('Комедия');
 MERGE INTO genres(name) KEY (name) VALUES ('Драма');
 MERGE INTO genres(name) KEY (name) VALUES ('Мультфильм');
