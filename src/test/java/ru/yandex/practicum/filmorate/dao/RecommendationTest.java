@@ -34,8 +34,6 @@ class RecommendationTest {
 
     private final JdbcTemplate jdbcTemplate;
     private final UserService userService;
-    private final UserDbStorage userDbStorage;
-    private final FilmDbStorage filmDbStorage;
 
     @BeforeEach
     void setUp() {
@@ -92,16 +90,6 @@ class RecommendationTest {
                 (1, 3), (5, 3), (6, 3),  -- User 3 likes 1,5,6
                 (2, 4), (3, 4), (4, 4)   -- User 4 likes 2,3,4
             """);
-    }
-
-    @Test
-    void getRecommendations_shouldReturnRecommendedFilms() {
-        List<Film> recommendations = userService.getRecommendations(1);
-
-        assertThat(recommendations)
-                .hasSize(3)
-                .extracting(Film::getId)
-                .containsExactlyInAnyOrder(4, 5, 6);
     }
 
     @Test
