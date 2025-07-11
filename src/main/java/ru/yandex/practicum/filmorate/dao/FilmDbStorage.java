@@ -150,10 +150,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             sql.append(" JOIN films_genres fg ON f.id = fg.id_film AND fg.id_genre = ").append(genreId);
         }
 
-        sql.append(" WHERE 1=1");
-
         if (year != null) {
-            sql.append(" AND EXTRACT(YEAR FROM f.releaseDate) = ").append(year);
+            sql.append(" WHERE EXTRACT(YEAR FROM f.releaseDate) = ").append(year);
         }
 
         sql.append("""
