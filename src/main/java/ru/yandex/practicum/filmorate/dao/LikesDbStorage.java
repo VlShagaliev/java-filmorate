@@ -20,6 +20,15 @@ public class LikesDbStorage {
     JOIN likes l2 ON l1.id_film = l2.id_film AND l1.id_user != l2.id_user
     WHERE l1.id_user = ?
     GROUP BY l2.id_user
+    HAVING COUNT(l2.id_film) = (
+        SELECT COUNT(l2.id_film)
+        FROM likes l1
+        JOIN likes l2 ON l1.id_film = l2.id_film AND l1.id_user != l2.id_user
+        WHERE l1.id_user = ?
+        GROUP BY l2.id_user
+        ORDER BY COUNT(l2.id_film) DESC
+        LIMIT 1
+    )
     ORDER BY COUNT(l2.id_film) DESC
     LIMIT 5
     """;
@@ -28,11 +37,11 @@ public class LikesDbStorage {
     FROM films f
     JOIN likes l ON f.id = l.id_film
     WHERE l.id_user IN (:similarUserIds)
-    AND f.id NOT IN (
-        SELECT id_film FROM likes WHERE id_user = :userId
+    AND NOT EXISTS (
+        SELECT 1 FROM likes WHERE id_film = f.id AND id_user = :userId
     )
     GROUP BY f.id
-    ORDER BY COUNT(l.id_user) DESC
+    ORDER BY COUNT(l.id_user) DESC, f.id
     LIMIT 10
     """;
     private final JdbcTemplate jdbc;
@@ -51,7 +60,7 @@ public class LikesDbStorage {
     }
 
     public List<Integer> findUsersWithSimilarLikes(int userId) {
-        return jdbc.queryForList(FIND_SIMILAR_USERS_SQL, Integer.class, userId);
+        return jdbc.queryForList(FIND_SIMILAR_USERS_SQL, Integer.class, userId, userId);
     }
 
     public List<Integer> getRecommendedFilms(int userId, List<Integer> similarUserIds) {
