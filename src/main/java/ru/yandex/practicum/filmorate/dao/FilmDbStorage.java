@@ -143,19 +143,36 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return check == 1;
     }
 
-    public Collection<Film> mostPopular(int count) {
-        String popularSql = "SELECT f.*, r.name AS rating_name, COUNT(l.id_user) AS likes_count " +
-                "FROM films as f " +
-                "LEFT JOIN likes AS l ON f.id = l.id_film " +
-                "LEFT JOIN ratings AS r ON r.id = f.id_rating " +
-                "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
-                "ORDER BY likes_count DESC " +
-                "LIMIT " + count;
-        Collection<Film> collection = jdbc.query(popularSql, mapper);
-        for (Film film : collection) {
-            film = get(film.getId());
+    public Collection<Film> mostPopular(int count, Integer genreId, Integer year) {
+        StringBuilder sql = new StringBuilder("""
+        SELECT f.*, r.name AS rating_name, COUNT(l.id_user) AS likes_count
+        FROM films f
+        LEFT JOIN likes l ON f.id = l.id_film
+        LEFT JOIN ratings r ON r.id = f.id_rating
+        """);
+
+        if (genreId != null) {
+            sql.append(" JOIN films_genres fg ON f.id = fg.id_film AND fg.id_genre = ").append(genreId);
         }
-        return collection;
+
+        if (year != null) {
+            sql.append(" WHERE EXTRACT(YEAR FROM f.releaseDate) = ").append(year);
+        }
+
+        sql.append("""
+        GROUP BY f.id, r.name
+        ORDER BY likes_count DESC
+        LIMIT
+        """).append(count);
+
+        Collection<Film> films = jdbc.query(sql.toString(), mapper);
+
+        films.forEach(film -> {
+            List<Genre> genres = genresDbStorage.getGenre(film.getId());
+            film.setGenres(genres.toArray(new Genre[0]));
+        });
+
+        return films;
     }
 
     public Film deleteLike(int filmId, int userId) {

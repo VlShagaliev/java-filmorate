@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.BaseDbStorage;
 import ru.yandex.practicum.filmorate.dao.FilmDbStorage;
+import ru.yandex.practicum.filmorate.dao.GenresDbStorage;
 import ru.yandex.practicum.filmorate.dao.LikesDbStorage;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
@@ -21,6 +22,7 @@ public class FilmService {
     @Getter
     private final FilmDbStorage filmDbStorage;
     private final LikesDbStorage likesDbStorage;
+    private final GenresDbStorage genresDbStorage;
     private final Logger log = LoggerFactory.getLogger(FilmService.class);
 
     public Collection<Film> films() {
@@ -54,8 +56,17 @@ public class FilmService {
         return film;
     }
 
-    public Collection<Film> popularFilms(int count) {
-        return filmDbStorage.mostPopular(count);
+    public Collection<Film> popularFilms(int count, Integer genreId, Integer year) {
+
+        if (genreId != null) {
+            genresDbStorage.checkDbHasId(genreId);
+        }
+
+        if (year != null && year < 1895) {
+            throw new ValidationException("Год должен быть не ранее 1895");
+        }
+
+        return filmDbStorage.mostPopular(count, genreId, year);
     }
 
     public Film deleteLike(int id, int userId) {
