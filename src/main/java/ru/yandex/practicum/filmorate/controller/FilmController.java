@@ -37,8 +37,12 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public Collection<Film> popularFilms(@RequestParam("count") int count) {
-        return filmService.popularFilms(count);
+    public Collection<Film> popularFilms(
+            @RequestParam(defaultValue = "10") int count,
+            @RequestParam(required = false) Integer genreId,
+            @RequestParam(required = false) Integer year) {
+
+        return filmService.popularFilms(count, genreId, year);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
