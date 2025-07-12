@@ -37,6 +37,13 @@ public class UserService {
         return userDbStorage.update(user);
     }
 
+    public void delete(int id) {
+        if (userDbStorage.get(id) == null) {
+            throw new NotFoundException("Пользователь с данным id отсутствует в списке");
+        }
+        userDbStorage.delete(id);
+    }
+
     public Collection<User> users() {
         return userDbStorage.users();
     }

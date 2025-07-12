@@ -32,23 +32,70 @@ CREATE TABLE IF NOT EXISTS users (
 -- Таблица friends
 CREATE TABLE IF NOT EXISTS friends (
     id SERIAL PRIMARY KEY,
-    _from INTEGER REFERENCES users(id),
-    _to INTEGER REFERENCES users(id),
+    _from INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    _to INTEGER REFERENCES users(id) ON DELETE CASCADE,
     status BOOLEAN
 );
 
 -- Таблица likes
 CREATE TABLE IF NOT EXISTS likes (
     id SERIAL PRIMARY KEY,
-    id_film INTEGER REFERENCES films(id),
-    id_user INTEGER REFERENCES users(id)
+    id_film INTEGER REFERENCES films(id) ON DELETE CASCADE,
+    id_user INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Таблица films_genres
 CREATE TABLE IF NOT EXISTS films_genres (
-    id_film INTEGER REFERENCES films(id),
+    id_film INTEGER REFERENCES films(id) ON DELETE CASCADE,
     id_genre INTEGER REFERENCES genres(id),
     PRIMARY KEY (id_film, id_genre)
+);
+
+CREATE TABLE IF NOT EXISTS director (
+    id SERIAL PRIMARY KEY,
+    name varchar
+);
+
+CREATE TABLE IF NOT EXISTS film_director (
+    id_film INTEGER REFERENCES films(id) ON DELETE CASCADE,
+    id_director INTEGER REFERENCES director(id) ON DELETE CASCADE,
+    PRIMARY KEY (id_film, id_director)
+);
+
+-- Таблица reviews
+CREATE TABLE IF NOT EXISTS reviews (
+    id SERIAL PRIMARY KEY,
+    id_film INTEGER REFERENCES films(id),
+    id_user INTEGER REFERENCES users(id),
+    content VARCHAR NOT NULL,
+    useful INTEGER NOT NULL,
+    is_positive BOOLEAN
+);
+
+-- Таблица reviews_likes
+CREATE TABLE IF NOT EXISTS reviews_likes (
+    id_user INTEGER REFERENCES users(id),
+    id_review INTEGER REFERENCES reviews(id) ON DELETE CASCADE,
+    is_useful BOOLEAN,
+    PRIMARY KEY (id_user, id_review)
+);
+
+-- Таблица reviews
+CREATE TABLE IF NOT EXISTS reviews (
+    id SERIAL PRIMARY KEY,
+    id_film INTEGER REFERENCES films(id),
+    id_user INTEGER REFERENCES users(id),
+    content VARCHAR NOT NULL,
+    useful INTEGER NOT NULL,
+    is_positive BOOLEAN
+);
+
+-- Таблица reviews_likes
+CREATE TABLE IF NOT EXISTS reviews_likes (
+    id_user INTEGER REFERENCES users(id),
+    id_review INTEGER REFERENCES reviews(id) ON DELETE CASCADE,
+    is_useful BOOLEAN,
+    PRIMARY KEY (id_user, id_review)
 );
 
 MERGE INTO genres(name) KEY (name) VALUES ('Комедия');
