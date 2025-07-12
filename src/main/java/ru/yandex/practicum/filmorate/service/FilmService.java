@@ -42,7 +42,7 @@ public class FilmService {
     }
 
     public void deleteFilm(int id) {
-        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, id, "Фильм");
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, id, "Фильм с данным id = %d отсутствует в списке");
         filmDbStorage.deleteFilm(id);
         log.info("Фильм удален: {}", id);
     }
