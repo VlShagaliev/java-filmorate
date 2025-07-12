@@ -81,12 +81,15 @@ public class FilmService {
         return filmDbStorage.get(id);
     }
 
-
     public Collection<Film> getFilmSorted(int directorId, String typeSort) {
         switch (typeSort) {
             case "year": return filmDbStorage.getFilmsSortedByYear(directorId);
             case "likes": return filmDbStorage.getFilmsSortedByLikes(directorId);
             default: throw new RuntimeException("Неизвестная команда сортировки!");
         }
+    }
+
+    public Collection<Film> getFilmByQuery(String query, String by) {
+        return filmDbStorage.getFilmByQuery(query, by);
     }
 }
