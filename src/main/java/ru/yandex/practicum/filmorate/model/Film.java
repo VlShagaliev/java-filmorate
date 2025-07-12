@@ -29,4 +29,5 @@ public class Film {
     private Genre[] genres;
     @JsonProperty(value = "mpa")
     private Rating rating;
+    private Director[] directors;
 }
