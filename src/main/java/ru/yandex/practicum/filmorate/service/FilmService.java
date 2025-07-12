@@ -5,10 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dao.BaseDbStorage;
-import ru.yandex.practicum.filmorate.dao.FilmDbStorage;
-import ru.yandex.practicum.filmorate.dao.GenresDbStorage;
-import ru.yandex.practicum.filmorate.dao.LikesDbStorage;
+import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -45,7 +42,7 @@ public class FilmService {
     }
 
     public void deleteFilm(int id) {
-        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, id);
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, id, "Фильм");
         filmDbStorage.deleteFilm(id);
         log.info("Фильм удален: {}", id);
     }
