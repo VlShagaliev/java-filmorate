@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS film_director (
     id_film INTEGER REFERENCES films(id) ON DELETE CASCADE,
     id_director INTEGER REFERENCES director(id) ON DELETE CASCADE,
     PRIMARY KEY (id_film, id_director)
+);
 
 -- Таблица reviews
 CREATE TABLE IF NOT EXISTS reviews (
@@ -77,7 +78,7 @@ CREATE TABLE IF NOT EXISTS reviews_likes (
     id_review INTEGER REFERENCES reviews(id) ON DELETE CASCADE,
     is_useful BOOLEAN,
     PRIMARY KEY (id_user, id_review)
-
+);
 
 -- Таблица reviews
 CREATE TABLE IF NOT EXISTS reviews (
