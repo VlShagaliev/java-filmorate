@@ -44,6 +44,10 @@ public class BaseDbStorage<T> {
         }
     }
 
+    protected void deleteFromDb(String query, Object... params) {
+        jdbc.update(query, params);
+    }
+
     public void checkDbHasId(String requestSql, int id, String message) {
         Integer check = jdbc.queryForObject(requestSql, Integer.class, id);
         if (check == 0 || check == null) {

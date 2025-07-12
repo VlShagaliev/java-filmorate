@@ -70,6 +70,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return film;
     }
 
+
     @Override
     public Film update(Film film) {
         StringBuilder requestBuilder = new StringBuilder(UPDATE_QUERY_FILMS);
@@ -82,10 +83,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         requestBuilder.delete(requestBuilder.length() - 1, requestBuilder.length());
         requestBuilder.append(" WHERE id = ").append(film.getId());
         updateSql(requestBuilder.toString());
-        updateSql("DELETE FROM films_genres WHERE id_film = ?", film.getId());
+        deleteFromDb("DELETE FROM films_genres WHERE id_film = ?", film.getId());
         if (film.getGenres() != null) {
             film = genresUpdate(film);
         }
+        deleteFromDb("DELETE FROM film_director WHERE id_film = ?", film.getId());
         if (film.getDirectors() != null) {
             film = directorsUpdate(film);
         }
@@ -186,18 +188,18 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return get(filmId);
     }
 
-    StringBuilder querySqlSort = new StringBuilder("SELECT f.*, r.name AS rating_name, COUNT(l.id_user) AS likes_count, fd.id_director " +
+    private final String querySqlSort = "SELECT f.*, r.name AS rating_name, COUNT(l.id_user) AS likes_count " +
             "FROM films as f " +
             "LEFT JOIN likes AS l ON f.id = l.id_film " +
             "LEFT JOIN ratings AS r ON r.id = f.id_rating " +
             "LEFT JOIN film_director AS fd ON f.id = fd.id_film " +
             "WHERE fd.id_director = ? " +
             "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
-            "ORDER BY ");
+            "ORDER BY ";
 
     public Collection<Film> getFilmsSortedByYear(int directorId) {
         String releaseDate = "f.releaseDate ASC";
-        Collection<Film> collection = jdbc.query(querySqlSort.toString() + releaseDate, mapper, directorId);
+        Collection<Film> collection = jdbc.query(querySqlSort + releaseDate, mapper, directorId);
         for (Film film : collection) {
             Film film1 = get(film.getId());
             film.setGenres(film1.getGenres());
@@ -208,7 +210,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     public Collection<Film> getFilmsSortedByLikes(int directorId) {
         String likesCount = "likes_count DESC";
-        Collection<Film> collection = jdbc.query(querySqlSort.toString() + likesCount, mapper, directorId);
+        Collection<Film> collection = jdbc.query(querySqlSort + likesCount, mapper, directorId);
         for (Film film : collection) {
             Film film1 = get(film.getId());
             film.setGenres(film1.getGenres());
