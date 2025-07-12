@@ -35,7 +35,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "LEFT JOIN ratings AS r ON r.id = f.id_rating " +
             "WHERE f.id = ? " +
             "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating ";
-    private final String errorMessage = "Фильм с данным id = %d отсутствует в списке";
+    public static final String errorMessage = "Фильм с данным id = %d отсутствует в списке";
 
     private final LikesDbStorage likesDbStorage;
     private final GenresDbStorage genresDbStorage;
@@ -199,7 +199,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     public Film deleteLike(int filmId, int userId) {
         checkDbHasId(CHECK_FILM_IN_DB, filmId, errorMessage);
-        userDbStorage.checkDbHasId(CHECK_USED_IN_DB, userId, "Пользователь с данным id = %d отсутствует в списке");
+        userDbStorage.checkDbHasId(CHECK_USER_IN_DB, userId, "Пользователь с данным id = %d отсутствует в списке");
         String deleteSql = "DELETE FROM likes WHERE id_film = ? AND id_user = ?";
         likesDbStorage.deleteLike(deleteSql, filmId, userId);
         return get(filmId);

@@ -12,7 +12,7 @@ import java.sql.Statement;
 
 @RequiredArgsConstructor
 public class BaseDbStorage<T> {
-    protected static final String CHECK_USED_IN_DB = "SELECT COUNT(*) FROM users WHERE id = ?";
+    protected static final String CHECK_USER_IN_DB = "SELECT COUNT(*) FROM users WHERE id = ?";
     public static final String CHECK_FILM_IN_DB = "SELECT COUNT(*) FROM films WHERE id = ?";
 
     protected final JdbcTemplate jdbc;
@@ -54,5 +54,4 @@ public class BaseDbStorage<T> {
             throw new NotFoundException(String.format(message, id));
         }
     }
-
 }
