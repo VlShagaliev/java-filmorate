@@ -172,10 +172,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 "ORDER BY likes_count DESC " +
                 "LIMIT " + count;
         Collection<Film> collection = jdbc.query(popularSql, mapper);
-        for (Film film : collection) {
-            film = get(film.getId());
-        }
-        return collection;
+        return pullGenresAndDirector(collection);
     }
 
     public Film deleteLike(int filmId, int userId) {
@@ -198,17 +195,63 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     public Collection<Film> getFilmsSortedByYear(int directorId) {
         String releaseDate = "f.releaseDate ASC";
         Collection<Film> collection = jdbc.query(querySqlSort.toString() + releaseDate, mapper, directorId);
-        for (Film film : collection) {
-            Film film1 = get(film.getId());
-            film.setGenres(film1.getGenres());
-            film.setDirectors(film1.getDirectors());
-        }
-        return collection;
+        return pullGenresAndDirector(collection);
     }
 
     public Collection<Film> getFilmsSortedByLikes(int directorId) {
         String likesCount = "likes_count DESC";
         Collection<Film> collection = jdbc.query(querySqlSort.toString() + likesCount, mapper, directorId);
+        return pullGenresAndDirector(collection);
+    }
+
+    public Collection<Film> getFilmByQuery(String query, String by) {
+        StringBuilder sqlQuery = new StringBuilder("SELECT f.*, r.name AS rating_name, COUNT(l.id_user) AS likes_count, fd.id_director, d.name " +
+                "FROM films as f " +
+                "LEFT JOIN likes AS l ON f.id = l.id_film " +
+                "LEFT JOIN ratings AS r ON r.id = f.id_rating " +
+                "LEFT JOIN film_director AS fd ON f.id = fd.id_film " +
+                "LEFT JOIN director AS d ON fd.id_director = d.id ");
+        String[] byArray = by.split(",");
+        Collection<Film> collection;
+        if (byArray.length == 2) {
+            String sqlQueryDirectorName = sqlQuery +
+                    "WHERE d.name LIKE '%" + query + "%' " +
+                    "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
+                    "ORDER BY likes_count DESC";
+            String sqlQueryTitleName = sqlQuery +
+                    "WHERE f.name LIKE '%" + query + "%' " +
+                    "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
+                    "ORDER BY likes_count DESC";
+            collection = jdbc.query(sqlQueryTitleName, mapper);
+            collection.addAll(jdbc.query(sqlQueryDirectorName, mapper));
+        } else {
+            String sqlFullQuery = getStringQuery(query, byArray, sqlQuery);
+            collection = jdbc.query(sqlFullQuery, mapper);
+        }
+        return pullGenresAndDirector(collection);
+    }
+
+    private static String getStringQuery(String query, String[] byArray, StringBuilder sqlQuery) {
+        String sqlFullQuery = "";
+        switch (byArray[0]) {
+            case "title":
+                sqlFullQuery = sqlQuery +
+                        "WHERE f.name LIKE '%" +
+                        query + "%' ";
+                break;
+            case "director":
+                sqlFullQuery = sqlQuery +
+                        "WHERE d.name LIKE '%" +
+                        query + "%' ";
+                break;
+        }
+        sqlFullQuery = sqlFullQuery +
+                "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
+                "ORDER BY likes_count DESC";
+        return sqlFullQuery;
+    }
+
+    private Collection<Film> pullGenresAndDirector(Collection<Film> collection) {
         for (Film film : collection) {
             Film film1 = get(film.getId());
             film.setGenres(film1.getGenres());
@@ -216,5 +259,4 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         }
         return collection;
     }
-
 }
