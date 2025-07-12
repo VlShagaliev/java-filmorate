@@ -44,6 +44,12 @@ public class FilmService {
         return film1;
     }
 
+    public void deleteFilm(int id) {
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, id);
+        filmDbStorage.deleteFilm(id);
+        log.info("Фильм удален: {}", id);
+    }
+
     public Film addLike(int id, int userId) {
         Film film = filmDbStorage.get(id);
         film.setCountLikes(likesDbStorage.addLike(id, userId));
