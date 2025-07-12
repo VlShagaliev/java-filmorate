@@ -9,9 +9,12 @@ import ru.yandex.practicum.filmorate.dao.BaseDbStorage;
 import ru.yandex.practicum.filmorate.dao.FilmDbStorage;
 import ru.yandex.practicum.filmorate.dao.GenresDbStorage;
 import ru.yandex.practicum.filmorate.dao.LikesDbStorage;
+import ru.yandex.practicum.filmorate.dao.UserEventDbStorage;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.UserEventOperation;
+import ru.yandex.practicum.filmorate.model.UserEventType;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -23,6 +26,7 @@ public class FilmService {
     private final FilmDbStorage filmDbStorage;
     private final LikesDbStorage likesDbStorage;
     private final GenresDbStorage genresDbStorage;
+    private final UserEventDbStorage userEventDbStorage;
     private final Logger log = LoggerFactory.getLogger(FilmService.class);
 
     public Collection<Film> films() {
@@ -47,6 +51,7 @@ public class FilmService {
     public Film addLike(int id, int userId) {
         Film film = filmDbStorage.get(id);
         film.setCountLikes(likesDbStorage.addLike(id, userId));
+        userEventDbStorage.add(userId, id, UserEventType.LIKE, UserEventOperation.ADD);
         return film;
     }
 
@@ -64,7 +69,9 @@ public class FilmService {
     }
 
     public Film deleteLike(int id, int userId) {
-        return filmDbStorage.deleteLike(id, userId);
+        Film resultFilm = filmDbStorage.deleteLike(id, userId);
+        userEventDbStorage.add(userId, id, UserEventType.LIKE, UserEventOperation.REMOVE);
+        return resultFilm;
     }
 
     private void validateFilm(Film film) {
