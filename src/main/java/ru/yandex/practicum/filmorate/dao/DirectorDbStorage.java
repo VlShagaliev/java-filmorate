@@ -15,8 +15,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
 
     private static final String GET_DIRECTOR_BY_FILM_ID = "SELECT d.id, d.name FROM director AS d " +
             "LEFT JOIN film_director AS fd ON fd.id_director = d.id " +
-            "LEFT JOIN films AS f ON f.id = fd.id_film " +
-            "WHERE f.id = ? ORDER BY d.id";
+            "WHERE fd.id_film = ? ORDER BY d.id";
 
     private static final String GET_DIRECTOR_BY_ID = "SELECT * " +
             "FROM director AS d " +

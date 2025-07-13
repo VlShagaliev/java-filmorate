@@ -15,6 +15,7 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "LEFT JOIN ratings AS r ON r.id = f.id_rating " +
             "WHERE f.id = ? " +
             "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating ";
-    private final String errorMessage = "Фильм с данным id = %d отсутствует в списке";
+    public static final String errorMessage = "Фильм с данным id = %d отсутствует в списке";
 
     private final LikesDbStorage likesDbStorage;
     private final GenresDbStorage genresDbStorage;
@@ -82,10 +83,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         requestBuilder.delete(requestBuilder.length() - 1, requestBuilder.length());
         requestBuilder.append(" WHERE id = ").append(film.getId());
         updateSql(requestBuilder.toString());
-        updateSql("DELETE FROM films_genres WHERE id_film = ?", film.getId());
+        deleteFromDb("DELETE FROM films_genres WHERE id_film = ?", film.getId());
         if (film.getGenres() != null) {
             film = genresUpdate(film);
         }
+        deleteFromDb("DELETE FROM film_director WHERE id_film = ?", film.getId());
         if (film.getDirectors() != null) {
             film = directorsUpdate(film);
         }
@@ -94,6 +96,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             film.getRating().setName(nameRating);
         }
         return film;
+    }
+
+    public void deleteFilm(int id) {
+        String sql = "DELETE FROM films WHERE id = ?";
+        updateSql(sql, id);
     }
 
     private Film genresUpdate(Film film) {
@@ -163,92 +170,99 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return check == 1;
     }
 
-    public Collection<Film> mostPopular(int count) {
-        String popularSql = "SELECT f.*, r.name AS rating_name, COUNT(l.id_user) AS likes_count " +
-                "FROM films as f " +
-                "LEFT JOIN likes AS l ON f.id = l.id_film " +
-                "LEFT JOIN ratings AS r ON r.id = f.id_rating " +
-                "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
-                "ORDER BY likes_count DESC " +
-                "LIMIT " + count;
-        Collection<Film> collection = jdbc.query(popularSql, mapper);
-        return pullGenresAndDirector(collection);
+    public Collection<Film> mostPopular(int count, Integer genreId, Integer year) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT f.*, r.name AS rating_name, COUNT(l.id_user) AS likes_count
+                FROM films f
+                LEFT JOIN likes l ON f.id = l.id_film
+                LEFT JOIN ratings r ON r.id = f.id_rating
+                """);
+
+        if (genreId != null) {
+            sql.append(" JOIN films_genres fg ON f.id = fg.id_film AND fg.id_genre = ").append(genreId);
+        }
+
+        if (year != null) {
+            sql.append(" WHERE EXTRACT(YEAR FROM f.releaseDate) = ").append(year);
+        }
+
+        sql.append("""
+                GROUP BY f.id, r.name
+                ORDER BY likes_count DESC
+                LIMIT
+                """).append(count);
+
+        Collection<Film> films = jdbc.query(sql.toString(), mapper);
+
+        return pullGenresAndDirector(films);
     }
 
     public Film deleteLike(int filmId, int userId) {
         checkDbHasId(CHECK_FILM_IN_DB, filmId, errorMessage);
-        userDbStorage.checkDbHasId(CHECK_USED_IN_DB, userId, "Пользователь с данным id = %d отсутствует в списке");
+        userDbStorage.checkDbHasId(CHECK_USER_IN_DB, userId, "Пользователь с данным id = %d отсутствует в списке");
         String deleteSql = "DELETE FROM likes WHERE id_film = ? AND id_user = ?";
         likesDbStorage.deleteLike(deleteSql, filmId, userId);
         return get(filmId);
     }
 
-    StringBuilder querySqlSort = new StringBuilder("SELECT f.*, r.name AS rating_name, COUNT(l.id_user) AS likes_count, fd.id_director " +
+    private final String querySqlSort = "SELECT f.*, r.name AS rating_name, COUNT(l.id_user) AS likes_count " +
             "FROM films as f " +
             "LEFT JOIN likes AS l ON f.id = l.id_film " +
             "LEFT JOIN ratings AS r ON r.id = f.id_rating " +
             "LEFT JOIN film_director AS fd ON f.id = fd.id_film " +
             "WHERE fd.id_director = ? " +
             "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
-            "ORDER BY ");
+            "ORDER BY ";
 
     public Collection<Film> getFilmsSortedByYear(int directorId) {
         String releaseDate = "f.releaseDate ASC";
-        Collection<Film> collection = jdbc.query(querySqlSort.toString() + releaseDate, mapper, directorId);
+        Collection<Film> collection = jdbc.query(querySqlSort + releaseDate, mapper, directorId);
         return pullGenresAndDirector(collection);
     }
 
     public Collection<Film> getFilmsSortedByLikes(int directorId) {
         String likesCount = "likes_count DESC";
-        Collection<Film> collection = jdbc.query(querySqlSort.toString() + likesCount, mapper, directorId);
+        Collection<Film> collection = jdbc.query(querySqlSort + likesCount, mapper, directorId);
         return pullGenresAndDirector(collection);
     }
 
     public Collection<Film> getFilmByQuery(String query, String by) {
-        StringBuilder sqlQuery = new StringBuilder("SELECT f.*, r.name AS rating_name, COUNT(l.id_user) AS likes_count, fd.id_director, d.name " +
-                "FROM films as f " +
-                "LEFT JOIN likes AS l ON f.id = l.id_film " +
-                "LEFT JOIN ratings AS r ON r.id = f.id_rating " +
-                "LEFT JOIN film_director AS fd ON f.id = fd.id_film " +
-                "LEFT JOIN director AS d ON fd.id_director = d.id ");
-        String[] byArray = by.split(",");
-        Collection<Film> collection;
-        if (byArray.length == 2) {
-            String sqlQueryDirectorName = sqlQuery +
-                    "WHERE d.name LIKE '%" + query + "%' " +
-                    "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
-                    "ORDER BY likes_count DESC";
-            String sqlQueryTitleName = sqlQuery +
-                    "WHERE f.name LIKE '%" + query + "%' " +
-                    "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
-                    "ORDER BY likes_count DESC";
-            collection = jdbc.query(sqlQueryTitleName, mapper);
-            collection.addAll(jdbc.query(sqlQueryDirectorName, mapper));
-        } else {
-            String sqlFullQuery = getStringQuery(query, byArray, sqlQuery);
-            collection = jdbc.query(sqlFullQuery, mapper);
-        }
-        return pullGenresAndDirector(collection);
-    }
-
-    private static String getStringQuery(String query, String[] byArray, StringBuilder sqlQuery) {
-        String sqlFullQuery = "";
-        switch (byArray[0]) {
-            case "title":
-                sqlFullQuery = sqlQuery +
-                        "WHERE f.name LIKE '%" +
-                        query + "%' ";
-                break;
-            case "director":
-                sqlFullQuery = sqlQuery +
-                        "WHERE d.name LIKE '%" +
-                        query + "%' ";
-                break;
-        }
-        sqlFullQuery = sqlFullQuery +
-                "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
+        String sqlHead = """
+                SELECT f.*,
+                	r.name AS rating_name,
+                	COUNT(l.id_user) AS likes_count
+                FROM films AS f
+                LEFT JOIN ratings AS r
+                	ON r.id = f.id_rating
+                LEFT JOIN likes AS l
+                	ON l.id_film = f.id
+                """;
+        String sqlJoinDirector = """
+                LEFT JOIN film_director AS fd
+                	ON fd.id_film = f.id
+                LEFT JOIN director AS d
+                	ON d.id = fd.id_director
+                """;
+        String sqlBottom = "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating " +
                 "ORDER BY likes_count DESC";
-        return sqlFullQuery;
+        List<String> searchBy = Arrays.stream(by.split(",")).toList();
+        StringBuilder sqlQuery = new StringBuilder(sqlHead);
+        if (searchBy.contains("director")) {
+            sqlQuery.append(sqlJoinDirector);
+        }
+        sqlQuery.append(System.lineSeparator()).append("WHERE");
+        if (searchBy.contains("title")) {
+            sqlQuery.append(" f.name LIKE '%").append(query).append("%' ");
+        }
+        if (searchBy.containsAll(List.of("title", "director"))) {
+            sqlQuery.append(" OR");
+        }
+        if (searchBy.contains("director")) {
+            sqlQuery.append(" d.name LIKE '%").append(query).append("%' ");
+        }
+        sqlQuery.append(System.lineSeparator()).append(sqlBottom);
+        Collection<Film> films = jdbc.query(sqlQuery.toString(), mapper);
+        return pullGenresAndDirector(films);
     }
 
     private Collection<Film> pullGenresAndDirector(Collection<Film> collection) {
