@@ -20,7 +20,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     private static final String UPDATE_QUERY = "UPDATE users SET name = ?, login = ?, email = ?, birthday = ? WHERE id = ?";
     private static final String ADD_FRIEND = "INSERT INTO friends(_from, _to,status) " +
             "VALUES (?, ?, ?)";
-
+    public static final String errorMessage = "Пользователь с данным id = %d отсутствует в списке";
 
     private final FriendDbStorage friendDbStorage;
 
@@ -44,7 +44,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public User update(User user) {
-        checkDbHasId(CHECK_USED_IN_DB, user.getId());
+        checkDbHasId(CHECK_USER_IN_DB, user.getId(), errorMessage);
         updateSql(
                 UPDATE_QUERY,
                 user.getName(),
@@ -56,6 +56,11 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         return user;
     }
 
+    public void delete(int id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        updateSql(sql, id);
+    }
+
     @Override
     public Collection<User> users() {
         return jdbc.query(FIND_ALL_QUERY, mapper);
@@ -63,7 +68,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public User get(int id) {
-        checkDbHasId(CHECK_USED_IN_DB, id);
+        checkDbHasId(CHECK_USER_IN_DB, id, errorMessage);
         return jdbc.queryForObject(FIND_BY_ID_QUERY, mapper, id);
     }
 
@@ -76,16 +81,16 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     public User deleteFriend(int id, int friendId) {
-        checkDbHasId(CHECK_USED_IN_DB, id);
-        checkDbHasId(CHECK_USED_IN_DB, friendId);
+        checkDbHasId(CHECK_USER_IN_DB, id, errorMessage);
+        checkDbHasId(CHECK_USER_IN_DB, friendId, errorMessage);
         String querySql = "DELETE FROM friends WHERE _from = ? AND _to = ?";
         jdbc.update(querySql, id, friendId);
         return get(id);
     }
 
     public User addFriend(int id, int friendId) {
-        checkDbHasId(CHECK_USED_IN_DB, id);
-        checkDbHasId(CHECK_USED_IN_DB, friendId);
+        checkDbHasId(CHECK_USER_IN_DB, id, errorMessage);
+        checkDbHasId(CHECK_USER_IN_DB, friendId, errorMessage);
         String checkSql = "SELECT COUNT(status) FROM friends WHERE _from = ? AND _to = ?";
         Integer check = jdbc.queryForObject(checkSql, Integer.class, id, friendId);
         boolean status = false;
@@ -100,7 +105,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     public Collection<User> getFriends(int id) {
-        checkDbHasId(CHECK_USED_IN_DB, id);
+        checkDbHasId(CHECK_USER_IN_DB, id, errorMessage);
         Set<Integer> friends = friendDbStorage.getFriends(id);
         return friends.stream()
                 .map(idFriends -> {
@@ -112,8 +117,8 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     public Collection<User> mutualFriends(int id, int otherId) {
-        checkDbHasId(CHECK_USED_IN_DB, id);
-        checkDbHasId(CHECK_USED_IN_DB, otherId);
+        checkDbHasId(CHECK_USER_IN_DB, id, errorMessage);
+        checkDbHasId(CHECK_USER_IN_DB, otherId, errorMessage);
 
         Set<Integer> friendsId = friendDbStorage.getFriends(id);
         Set<Integer> friendsOtherId = friendDbStorage.getFriends(otherId);

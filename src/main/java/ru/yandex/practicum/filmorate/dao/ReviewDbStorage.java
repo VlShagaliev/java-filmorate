@@ -28,6 +28,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
     private static final String SELECT_USEFUL =
             "SELECT COALESCE(SUM(CASE WHEN is_useful THEN 1 ELSE -1 END), 0) FROM reviews_likes WHERE id_review = ?";
     private static final String UPDATE_USEFUL = "UPDATE reviews SET useful = ? WHERE id = ?";
+    public static final String errorMessage = "Отзыв с данным id = %d отсутствует в списке";
 
     private final RowMapper<Review> reviewMapper;
 
@@ -38,8 +39,8 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public Review addReview(Review review) {
-        checkDbHasId(CHECK_USED_IN_DB, review.getUserId());
-        checkDbHasId(CHECK_FILM_IN_DB, review.getFilmId());
+        checkDbHasId(CHECK_USER_IN_DB, review.getUserId(), UserDbStorage.errorMessage);
+        checkDbHasId(CHECK_FILM_IN_DB, review.getFilmId(), FilmDbStorage.errorMessage);
 
         Integer id = insert(
                 INSERT_REVIEW,
@@ -65,13 +66,13 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public void deleteReview(Integer id) {
-        checkDbHasId(CHECK_REVIEW_ID_QUERY, id);
+        checkDbHasId(CHECK_REVIEW_ID_QUERY, id, errorMessage);
         jdbc.update(DELETE_REVIEW, id);
     }
 
     @Override
     public Review getReviewById(Integer id) {
-        checkDbHasId(CHECK_REVIEW_ID_QUERY, id);
+        checkDbHasId(CHECK_REVIEW_ID_QUERY, id, errorMessage);
         return jdbc.queryForObject(SELECT_BY_ID, reviewMapper, id);
     }
 
@@ -86,8 +87,8 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public void likeOrDislikeReview(Integer reviewId, Integer userId, boolean isUseful) {
-        checkDbHasId(CHECK_REVIEW_ID_QUERY, reviewId);
-        checkDbHasId(CHECK_USED_IN_DB, userId);
+        checkDbHasId(CHECK_REVIEW_ID_QUERY, reviewId, errorMessage);
+        checkDbHasId(CHECK_USER_IN_DB, userId, UserDbStorage.errorMessage);
 
         jdbc.update(INSERT_LIKE_DISLIKE, reviewId, userId, isUseful);
         updateUseful(reviewId);
@@ -95,8 +96,8 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public void removeReviewLikeOrDislike(Integer reviewId, Integer userId, boolean isLike) {
-        checkDbHasId(CHECK_REVIEW_ID_QUERY, reviewId);
-        checkDbHasId(CHECK_USED_IN_DB, userId);
+        checkDbHasId(CHECK_REVIEW_ID_QUERY, reviewId, errorMessage);
+        checkDbHasId(CHECK_USER_IN_DB, userId, UserDbStorage.errorMessage);
 
         jdbc.update(DELETE_LIKE_DISLIKE, reviewId, userId, isLike);
         updateUseful(reviewId);

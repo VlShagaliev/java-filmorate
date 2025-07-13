@@ -5,11 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dao.BaseDbStorage;
-import ru.yandex.practicum.filmorate.dao.FilmDbStorage;
-import ru.yandex.practicum.filmorate.dao.GenresDbStorage;
-import ru.yandex.practicum.filmorate.dao.LikesDbStorage;
-import ru.yandex.practicum.filmorate.dao.UserEventDbStorage;
+import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -17,7 +13,9 @@ import ru.yandex.practicum.filmorate.model.UserEventOperation;
 import ru.yandex.practicum.filmorate.model.UserEventType;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -42,10 +40,17 @@ public class FilmService {
 
     public Film update(Film film) {
         validateFilm(film);
-        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, film.getId());
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, film.getId(), FilmDbStorage.errorMessage);
         Film film1 = filmDbStorage.update(film);
         log.info("Фильм обновлен: {}", film1);
         return film1;
+    }
+
+    public void deleteFilm(int id) {
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, id, FilmDbStorage.errorMessage);
+
+        filmDbStorage.deleteFilm(id);
+        log.info("Фильм удален: {}", id);
     }
 
     public Film addLike(int id, int userId) {
@@ -97,5 +102,24 @@ public class FilmService {
 
     public Film getFilmById(int id) {
         return filmDbStorage.get(id);
+    }
+
+    public Collection<Film> getFilmSorted(int directorId, String typeSort) {
+        switch (typeSort) {
+            case "year": return filmDbStorage.getFilmsSortedByYear(directorId);
+            case "likes": return filmDbStorage.getFilmsSortedByLikes(directorId);
+            default: throw new RuntimeException("Неизвестная команда сортировки!");
+        }
+    }
+
+
+
+    public Collection<Film> getFilmByQuery(String query, String by) {
+        List<String> searchBy = Arrays.stream(by.split(",")).toList();
+        searchBy.stream()
+                .filter(option -> !option.equals("title") || !option.equals("director"))
+                .findFirst()
+                .orElseThrow(() -> new ValidationException("Переданные параметры неверные!"));
+        return filmDbStorage.getFilmByQuery(query, by);
     }
 }

@@ -10,13 +10,14 @@ import java.util.Collection;
 @Repository
 public class RatingDbStorage extends BaseDbStorage<Rating> {
     private static final String CHECK_RATING_IN_DB = "SELECT COUNT(*) FROM ratings WHERE id = ?";
+    private final String errorMessage = "Рейтинг с данным id = %d отсутствует в списке";
 
     public RatingDbStorage(JdbcTemplate jdbc, RowMapper<Rating> mapper) {
         super(jdbc, mapper);
     }
 
     public Rating getRatingById(int id) {
-        checkDbHasId(CHECK_RATING_IN_DB, id);
+        checkDbHasId(CHECK_RATING_IN_DB, id, errorMessage);
         return jdbc.queryForObject("SELECT id, name FROM ratings WHERE id = ?", mapper, id);
     }
 
