@@ -1,6 +1,8 @@
 DELETE FROM friends;
 DELETE FROM likes;
 DELETE FROM films_genres;
+DELETE FROM users_events;
+ALTER TABLE users_events ALTER COLUMN id RESTART WITH 1;
 DELETE FROM films;
 ALTER TABLE films ALTER COLUMN id RESTART WITH 1;
 DELETE FROM users;

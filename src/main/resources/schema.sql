@@ -98,6 +98,16 @@ CREATE TABLE IF NOT EXISTS reviews_likes (
     PRIMARY KEY (id_user, id_review)
 );
 
+-- Таблица users_events
+CREATE TABLE IF NOT EXISTS users_events (
+    id SERIAL PRIMARY KEY,
+    time_stamp BIGINT,
+    id_user INTEGER REFERENCES users(id),
+    id_entity INTEGER,
+    event_type INTEGER,
+    operation INTEGER
+);
+
 MERGE INTO genres(name) KEY (name) VALUES ('Комедия');
 MERGE INTO genres(name) KEY (name) VALUES ('Драма');
 MERGE INTO genres(name) KEY (name) VALUES ('Мультфильм');
