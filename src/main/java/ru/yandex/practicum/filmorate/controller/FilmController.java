@@ -50,6 +50,11 @@ public class FilmController {
         return filmService.popularFilms(count, genreId, year);
     }
 
+    @GetMapping("/common")
+    public Collection<Film> getCommonFilms(@RequestParam int userId, @RequestParam int friendId) {
+        return filmService.getCommonFilms(userId, friendId);
+    }
+
     @DeleteMapping("/{id}/like/{userId}")
     public Film deleteLike(@PathVariable("id") int id,
                            @PathVariable("userId") int userId) {

@@ -45,7 +45,11 @@ public class FilmService {
     }
 
     public void deleteFilm(int id) {
-        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, id);
+        filmDbStorage.checkDbHasId(
+                BaseDbStorage.CHECK_FILM_IN_DB,
+                id,
+                "Фильм с данным id = %d отсутствует в списке"
+        );
         filmDbStorage.deleteFilm(id);
         log.info("Фильм удален: {}", id);
     }
@@ -67,6 +71,10 @@ public class FilmService {
         }
 
         return filmDbStorage.mostPopular(count, genreId, year);
+    }
+
+    public Collection<Film> getCommonFilms(int userId, int friendId) {
+        return filmDbStorage.getCommonFilms(userId, friendId);
     }
 
     public Film deleteLike(int id, int userId) {
