@@ -222,20 +222,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return films;
     }
 
-    public Collection<Film> getCommonFilms(int userId, int friendId) {
-        checkDbHasId(CHECK_USER_IN_DB, userId, "Пользователь с данным id = %d отсутствует в списке");
-        checkDbHasId(CHECK_USER_IN_DB, friendId, "Пользователь с данным id = %d отсутствует в списке");
-        Collection<Film> films = jdbc.query(FIND_COMMON_QUERY, mapper, userId, friendId);
-
-        films.forEach(film -> {
-            film.setGenres(genresDbStorage.getGenre(film.getId()).toArray(new Genre[0]));
-            film.setDirectors(directorDbStorage.getDirectorByIdFilm(film.getId()).toArray(new Director[0]));
-            film.setCountLikes(likesDbStorage.getLike(film.getId()));
-        });
-
-        return films;
-    }
-
     public Film deleteLike(int filmId, int userId) {
         checkDbHasId(CHECK_FILM_IN_DB, filmId, errorMessage);
         userDbStorage.checkDbHasId(CHECK_USER_IN_DB, userId, "Пользователь с данным id = %d отсутствует в списке");
