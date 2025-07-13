@@ -13,10 +13,17 @@ import java.util.Collection;
 
 @Repository
 public class UserEventDbStorage extends BaseDbStorage<UserEvent> implements UserEventStorage {
-    private static final String INSERT_QUERY_USERS_EVENTS = "INSERT INTO users_events" +
-                                                            "(time_stamp, id_user, id_entity, event_type, operation)" +
-                                                            "VALUES (?, ?, ?, ?, ?)";
-    private static final String FIND_ALL_QUERY = "SELECT * FROM users_events WHERE id_user = ?";
+    private static final String INSERT_QUERY_USERS_EVENTS = """
+            INSERT INTO users_events
+                (time_stamp, id_user, id_entity, event_type, operation)
+            VALUES
+                (?, ?, ?, ?, ?)
+            """;
+    private static final String FIND_ALL_QUERY = """
+            SELECT *
+            FROM users_events
+            WHERE id_user = ?
+            """;
 
     public UserEventDbStorage(JdbcTemplate jdbc, RowMapper<UserEvent> mapper) {
         super(jdbc, mapper);
