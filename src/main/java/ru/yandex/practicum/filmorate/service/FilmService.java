@@ -73,6 +73,10 @@ public class FilmService {
         return filmDbStorage.mostPopular(count, genreId, year);
     }
 
+    public Collection<Film> getCommonFilms(int userId, int friendId) {
+        return filmDbStorage.getCommonFilms(userId, friendId);
+    }
+
     public Film deleteLike(int id, int userId) {
         Film resultFilm = filmDbStorage.deleteLike(id, userId);
         userEventDbStorage.add(userId, id, UserEventType.LIKE, UserEventOperation.REMOVE);
@@ -111,8 +115,6 @@ public class FilmService {
             default: throw new RuntimeException("Неизвестная команда сортировки!");
         }
     }
-
-
 
     public Collection<Film> getFilmByQuery(String query, String by) {
         List<String> searchBy = Arrays.stream(by.split(",")).toList();
