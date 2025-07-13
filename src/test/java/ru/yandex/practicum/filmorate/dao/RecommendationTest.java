@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.dao.mappers.FilmRowMapper;
+import ru.yandex.practicum.filmorate.dao.mappers.UserEventRowMapper;
 import ru.yandex.practicum.filmorate.dao.mappers.UserRowMapper;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -25,6 +26,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         FilmDbStorage.class,
         UserDbStorage.class,
         LikesDbStorage.class,
+        UserEventDbStorage.class,
+        UserEventRowMapper.class,
         UserService.class,
         FilmRowMapper.class,
         UserRowMapper.class
