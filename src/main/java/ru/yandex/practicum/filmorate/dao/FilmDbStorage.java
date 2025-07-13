@@ -91,6 +91,9 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             requestBuilder.append(" description = '").append(film.getDescription()).append("',");
         if (film.getReleaseDate() != null)
             requestBuilder.append(" releaseDate = '").append(film.getReleaseDate()).append("',");
+        requestBuilder.append(" duration = ").append(film.getDuration()).append(",");
+        if (film.getRating() != null)
+            requestBuilder.append(" id_rating = ").append(film.getRating().getId()).append(",");
         requestBuilder.delete(requestBuilder.length() - 1, requestBuilder.length());
         requestBuilder.append(" WHERE id = ").append(film.getId());
         updateSql(requestBuilder.toString());
@@ -152,7 +155,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public Collection<Film> films() {
-        return jdbc.query(FIND_ALL_QUERY, mapper);
+        return pullGenresAndDirector(jdbc.query(FIND_ALL_QUERY, mapper));
     }
 
     @Override
@@ -213,13 +216,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         checkDbHasId(CHECK_USER_IN_DB, friendId, "Пользователь с данным id = %d отсутствует в списке");
         Collection<Film> films = jdbc.query(FIND_COMMON_QUERY, mapper, userId, friendId);
 
-        films.forEach(film -> {
-            film.setGenres(genresDbStorage.getGenre(film.getId()).toArray(new Genre[0]));
-            film.setDirectors(directorDbStorage.getDirectorByIdFilm(film.getId()).toArray(new Director[0]));
-            film.setCountLikes(likesDbStorage.getLike(film.getId()));
-        });
-
-        return films;
+        return pullGenresAndDirector(films);
     }
 
     public Film deleteLike(int filmId, int userId) {
@@ -291,11 +288,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     private Collection<Film> pullGenresAndDirector(Collection<Film> collection) {
-        for (Film film : collection) {
-            Film film1 = get(film.getId());
-            film.setGenres(film1.getGenres());
-            film.setDirectors(film1.getDirectors());
-        }
+        collection.forEach(film -> {
+            film.setGenres(genresDbStorage.getGenre(film.getId()).toArray(new Genre[0]));
+            film.setDirectors(directorDbStorage.getDirectorByIdFilm(film.getId()).toArray(new Director[0]));
+            film.setCountLikes(likesDbStorage.getLike(film.getId()));
+        });
         return collection;
     }
 }
