@@ -101,7 +101,7 @@ public class UserService {
             throw new ValidationException(String.format("Дата рождения не может быть в будущем: %s. Текущее время: %s",
                     user.getBirthday(), LocalDate.now()));
         }
-        if (user.getName() == null) {
+        if (user.getName() == null || user.getName().isBlank()) {
             log.info("Имя пустое, присваиваем имя=логин: {}", user.getLogin());
             user.setName(user.getLogin());
         }
