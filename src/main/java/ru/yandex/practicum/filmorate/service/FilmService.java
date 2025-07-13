@@ -14,7 +14,9 @@ import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -38,14 +40,14 @@ public class FilmService {
 
     public Film update(Film film) {
         validateFilm(film);
-        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, film.getId(), "Фильм с данным id = %d отсутствует в списке");
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, film.getId(), FilmDbStorage.errorMessage);
         Film film1 = filmDbStorage.update(film);
         log.info("Фильм обновлен: {}", film1);
         return film1;
     }
 
     public void deleteFilm(int id) {
-        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, id);
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, id, FilmDbStorage.errorMessage);
         filmDbStorage.deleteFilm(id);
         log.info("Фильм удален: {}", id);
     }
@@ -98,12 +100,20 @@ public class FilmService {
         return filmDbStorage.get(id);
     }
 
-
     public Collection<Film> getFilmSorted(int directorId, String typeSort) {
         switch (typeSort) {
             case "year": return filmDbStorage.getFilmsSortedByYear(directorId);
             case "likes": return filmDbStorage.getFilmsSortedByLikes(directorId);
             default: throw new RuntimeException("Неизвестная команда сортировки!");
         }
+    }
+
+    public Collection<Film> getFilmByQuery(String query, String by) {
+        List<String> searchBy = Arrays.stream(by.split(",")).toList();
+        searchBy.stream()
+                .filter(option -> !option.equals("title") || !option.equals("director"))
+                .findFirst()
+                .orElseThrow(() -> new ValidationException("Переданные параметры неверные!"));
+        return filmDbStorage.getFilmByQuery(query, by);
     }
 }
