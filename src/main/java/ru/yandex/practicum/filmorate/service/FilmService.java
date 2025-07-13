@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.UserEventOperation;
 import ru.yandex.practicum.filmorate.model.UserEventType;
 
@@ -99,9 +100,12 @@ public class FilmService {
         if (!filmDbStorage.checkRatingHasId(film.getRating().getId())) {
             throw new NotFoundException(String.format("Рейтинг с данным id = %d отсутствует в списке", film.getRating().getId()));
         }
-        /*if (filmDbStorage.checkDbHasId(film.getId())){
-            throw new ValidationException("БД уже содержит данный фильм");
-        }*/
+        if ((film.getGenres() != null && film.getGenres().length != 0)) {
+            Genre[] newGenres = Arrays.stream(film.getGenres()).distinct().toArray(Genre[]::new);
+            if (film.getGenres().length != newGenres.length) {
+                film.setGenres(newGenres);
+            }
+        }
     }
 
     public Film getFilmById(int id) {
