@@ -36,6 +36,17 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "LEFT JOIN ratings AS r ON r.id = f.id_rating " +
             "WHERE f.id = ? " +
             "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating ";
+    private static final String FIND_COMMON_QUERY = """
+        SELECT f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating,
+            r.name AS rating_name, COUNT(l3.id_user) AS likes_count
+        FROM films f
+        JOIN likes l1 ON f.id = l1.id_film AND l1.id_user = ?
+        JOIN likes l2 ON f.id = l2.id_film AND l2.id_user = ?
+        LEFT JOIN likes l3 ON f.id = l3.id_film
+        LEFT JOIN ratings r ON r.id = f.id_rating
+        GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating, r.name
+        ORDER BY likes_count DESC
+    """;
     public static final String errorMessage = "Фильм с данным id = %d отсутствует в списке";
 
     private final LikesDbStorage likesDbStorage;
@@ -195,6 +206,20 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         Collection<Film> films = jdbc.query(sql.toString(), mapper);
 
         return pullGenresAndDirector(films);
+    }
+
+    public Collection<Film> getCommonFilms(int userId, int friendId) {
+        checkDbHasId(CHECK_USER_IN_DB, userId, "Пользователь с данным id = %d отсутствует в списке");
+        checkDbHasId(CHECK_USER_IN_DB, friendId, "Пользователь с данным id = %d отсутствует в списке");
+        Collection<Film> films = jdbc.query(FIND_COMMON_QUERY, mapper, userId, friendId);
+
+        films.forEach(film -> {
+            film.setGenres(genresDbStorage.getGenre(film.getId()).toArray(new Genre[0]));
+            film.setDirectors(directorDbStorage.getDirectorByIdFilm(film.getId()).toArray(new Director[0]));
+            film.setCountLikes(likesDbStorage.getLike(film.getId()));
+        });
+
+        return films;
     }
 
     public Film deleteLike(int filmId, int userId) {
