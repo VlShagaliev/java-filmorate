@@ -28,14 +28,14 @@ public class DirectorDbStorage extends BaseDbStorage<Director> {
     private static final String FIND_ALL_QUERY = "SELECT * " +
             "FROM director";
 
-    protected static final String CHECK_DIRECTOR_IN_DB = "SELECT COUNT(*) " +
+    public static final String CHECK_DIRECTOR_IN_DB = "SELECT COUNT(*) " +
             "FROM director " +
             "WHERE id = ?";
 
     private static final String DELETE_DIRECTOR_BY_ID = "DELETE FROM director " +
             "WHERE id = ?";
 
-    private final String errorMessage = "Режиссер с данным id = %d отсутствует в списке";
+    public static final String errorMessage = "Режиссер с данным id = %d отсутствует в списке";
 
     public DirectorDbStorage(JdbcTemplate jdbc, RowMapper<Director> mapper) {
         super(jdbc, mapper);

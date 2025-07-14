@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.UserEventOperation;
 import ru.yandex.practicum.filmorate.model.UserEventType;
 
@@ -25,6 +26,7 @@ public class FilmService {
     private final LikesDbStorage likesDbStorage;
     private final GenresDbStorage genresDbStorage;
     private final UserEventDbStorage userEventDbStorage;
+    private final DirectorDbStorage directorDbStorage;
     private final Logger log = LoggerFactory.getLogger(FilmService.class);
 
     public Collection<Film> films() {
@@ -99,9 +101,12 @@ public class FilmService {
         if (!filmDbStorage.checkRatingHasId(film.getRating().getId())) {
             throw new NotFoundException(String.format("Рейтинг с данным id = %d отсутствует в списке", film.getRating().getId()));
         }
-        /*if (filmDbStorage.checkDbHasId(film.getId())){
-            throw new ValidationException("БД уже содержит данный фильм");
-        }*/
+        if ((film.getGenres() != null && film.getGenres().length != 0)) {
+            Genre[] newGenres = Arrays.stream(film.getGenres()).distinct().toArray(Genre[]::new);
+            if (film.getGenres().length != newGenres.length) {
+                film.setGenres(newGenres);
+            }
+        }
     }
 
     public Film getFilmById(int id) {
@@ -109,19 +114,21 @@ public class FilmService {
     }
 
     public Collection<Film> getFilmSorted(int directorId, String typeSort) {
-        switch (typeSort) {
-            case "year": return filmDbStorage.getFilmsSortedByYear(directorId);
-            case "likes": return filmDbStorage.getFilmsSortedByLikes(directorId);
-            default: throw new RuntimeException("Неизвестная команда сортировки!");
-        }
+        directorDbStorage.checkDbHasId(directorDbStorage.CHECK_DIRECTOR_IN_DB, directorId, directorDbStorage.errorMessage);
+        return switch (typeSort) {
+            case "year" -> filmDbStorage.getFilmsSortedByYear(directorId);
+            case "likes" -> filmDbStorage.getFilmsSortedByLikes(directorId);
+            default -> throw new RuntimeException("Неизвестная команда сортировки!");
+        };
     }
 
     public Collection<Film> getFilmByQuery(String query, String by) {
         List<String> searchBy = Arrays.stream(by.split(",")).toList();
-        searchBy.stream()
-                .filter(option -> !option.equals("title") || !option.equals("director"))
-                .findFirst()
-                .orElseThrow(() -> new ValidationException("Переданные параметры неверные!"));
+        boolean allValid = searchBy.stream()
+                .allMatch(option -> option.equals("title") || option.equals("director"));
+        if (!allValid) {
+            throw new ValidationException("Переданные параметры неверные!");
+        }
         return filmDbStorage.getFilmByQuery(query, by);
     }
 }

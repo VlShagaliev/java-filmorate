@@ -17,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 @Repository
@@ -37,16 +38,16 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "WHERE f.id = ? " +
             "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating ";
     private static final String FIND_COMMON_QUERY = """
-        SELECT f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating,
-            r.name AS rating_name, COUNT(l3.id_user) AS likes_count
-        FROM films f
-        JOIN likes l1 ON f.id = l1.id_film AND l1.id_user = ?
-        JOIN likes l2 ON f.id = l2.id_film AND l2.id_user = ?
-        LEFT JOIN likes l3 ON f.id = l3.id_film
-        LEFT JOIN ratings r ON r.id = f.id_rating
-        GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating, r.name
-        ORDER BY likes_count DESC
-    """;
+                SELECT f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating,
+                    r.name AS rating_name, COUNT(l3.id_user) AS likes_count
+                FROM films f
+                JOIN likes l1 ON f.id = l1.id_film AND l1.id_user = ?
+                JOIN likes l2 ON f.id = l2.id_film AND l2.id_user = ?
+                LEFT JOIN likes l3 ON f.id = l3.id_film
+                LEFT JOIN ratings r ON r.id = f.id_rating
+                GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating, r.name
+                ORDER BY likes_count DESC
+            """;
     public static final String errorMessage = "Фильм с данным id = %d отсутствует в списке";
 
     private final LikesDbStorage likesDbStorage;
@@ -91,16 +92,23 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             requestBuilder.append(" description = '").append(film.getDescription()).append("',");
         if (film.getReleaseDate() != null)
             requestBuilder.append(" releaseDate = '").append(film.getReleaseDate()).append("',");
+        requestBuilder.append(" duration = ").append(film.getDuration()).append(",");
+        if (film.getRating() != null)
+            requestBuilder.append(" id_rating = ").append(film.getRating().getId()).append(",");
         requestBuilder.delete(requestBuilder.length() - 1, requestBuilder.length());
         requestBuilder.append(" WHERE id = ").append(film.getId());
         updateSql(requestBuilder.toString());
         deleteFromDb("DELETE FROM films_genres WHERE id_film = ?", film.getId());
         if (film.getGenres() != null) {
             film = genresUpdate(film);
+        } else {
+            film.setGenres(genresDbStorage.getGenre(film.getId()).toArray(new Genre[0]));
         }
         deleteFromDb("DELETE FROM film_director WHERE id_film = ?", film.getId());
         if (film.getDirectors() != null) {
             film = directorsUpdate(film);
+        } else {
+            film.setDirectors(directorDbStorage.getDirectorByIdFilm(film.getId()).toArray(new Director[0]));
         }
         if (film.getRating() != null) {
             String nameRating = jdbc.queryForObject("SELECT name FROM ratings WHERE id = ?", String.class, film.getRating().getId());
@@ -122,7 +130,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 checkGenresHasId(genres[i].getId());
                 ps.setInt(1, film.getId());
                 ps.setInt(2, genres[i].getId());
-                film.getGenres()[i].setName(jdbc.queryForObject("SELECT name FROM genres WHERE id = ?", String.class, genres[i].getId()));
             }
 
             @Override
@@ -130,6 +137,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 return genres.length;
             }
         });
+        film.setGenres(genresDbStorage.getGenre(film.getId()).toArray(new Genre[0]));
         return film;
     }
 
@@ -147,12 +155,13 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 return directors.length;
             }
         });
+        film.setDirectors(directorDbStorage.getDirectorByIdFilm(film.getId()).toArray(new Director[0]));
         return film;
     }
 
     @Override
     public Collection<Film> films() {
-        return jdbc.query(FIND_ALL_QUERY, mapper);
+        return pullGenresAndDirector(jdbc.query(FIND_ALL_QUERY, mapper));
     }
 
     @Override
@@ -213,13 +222,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         checkDbHasId(CHECK_USER_IN_DB, friendId, "Пользователь с данным id = %d отсутствует в списке");
         Collection<Film> films = jdbc.query(FIND_COMMON_QUERY, mapper, userId, friendId);
 
-        films.forEach(film -> {
-            film.setGenres(genresDbStorage.getGenre(film.getId()).toArray(new Genre[0]));
-            film.setDirectors(directorDbStorage.getDirectorByIdFilm(film.getId()).toArray(new Director[0]));
-            film.setCountLikes(likesDbStorage.getLike(film.getId()));
-        });
-
-        return films;
+        return pullGenresAndDirector(films);
     }
 
     public Film deleteLike(int filmId, int userId) {
@@ -277,13 +280,13 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         }
         sqlQuery.append(System.lineSeparator()).append("WHERE");
         if (searchBy.contains("title")) {
-            sqlQuery.append(" f.name LIKE '%").append(query).append("%' ");
+            sqlQuery.append(" LOWER(f.name) LIKE '%").append(query.toLowerCase()).append("%' ");
         }
-        if (searchBy.containsAll(List.of("title", "director"))) {
+        if (new HashSet<>(searchBy).containsAll(List.of("title", "director"))) {
             sqlQuery.append(" OR");
         }
         if (searchBy.contains("director")) {
-            sqlQuery.append(" d.name LIKE '%").append(query).append("%' ");
+            sqlQuery.append(" LOWER(d.name) LIKE '%").append(query.toLowerCase()).append("%' ");
         }
         sqlQuery.append(System.lineSeparator()).append(sqlBottom);
         Collection<Film> films = jdbc.query(sqlQuery.toString(), mapper);
@@ -291,11 +294,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     private Collection<Film> pullGenresAndDirector(Collection<Film> collection) {
-        for (Film film : collection) {
-            Film film1 = get(film.getId());
-            film.setGenres(film1.getGenres());
-            film.setDirectors(film1.getDirectors());
-        }
+        collection.forEach(film -> {
+            film.setGenres(genresDbStorage.getGenre(film.getId()).toArray(new Genre[0]));
+            film.setDirectors(directorDbStorage.getDirectorByIdFilm(film.getId()).toArray(new Director[0]));
+            film.setCountLikes(likesDbStorage.getLike(film.getId()));
+        });
         return collection;
     }
 }
