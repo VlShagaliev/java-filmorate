@@ -46,21 +46,17 @@ public class ReviewService {
 
     public void likeReview(Integer reviewId, Integer userId) {
         reviewStorage.likeOrDislikeReview(reviewId, userId, true);
-        userEventStorage.add(userId, reviewId, UserEventType.LIKE, UserEventOperation.ADD);
     }
 
     public void dislikeReview(Integer reviewId, Integer userId) {
         reviewStorage.likeOrDislikeReview(reviewId, userId, false);
-        userEventStorage.add(userId, reviewId, UserEventType.LIKE, UserEventOperation.ADD);
     }
 
     public void removeReviewLike(Integer reviewId, Integer userId) {
         reviewStorage.removeReviewLikeOrDislike(reviewId, userId, true);
-        userEventStorage.add(userId, reviewId, UserEventType.LIKE, UserEventOperation.REMOVE);
     }
 
     public void removeReviewDislike(Integer reviewId, Integer userId) {
         reviewStorage.removeReviewLikeOrDislike(reviewId, userId, false);
-        userEventStorage.add(userId, reviewId, UserEventType.LIKE, UserEventOperation.REMOVE);
     }
 }
