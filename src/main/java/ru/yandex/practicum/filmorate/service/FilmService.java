@@ -26,6 +26,7 @@ public class FilmService {
     private final LikesDbStorage likesDbStorage;
     private final GenresDbStorage genresDbStorage;
     private final UserEventDbStorage userEventDbStorage;
+    private final DirectorDbStorage directorDbStorage;
     private final Logger log = LoggerFactory.getLogger(FilmService.class);
 
     public Collection<Film> films() {
@@ -113,19 +114,21 @@ public class FilmService {
     }
 
     public Collection<Film> getFilmSorted(int directorId, String typeSort) {
-        switch (typeSort) {
-            case "year": return filmDbStorage.getFilmsSortedByYear(directorId);
-            case "likes": return filmDbStorage.getFilmsSortedByLikes(directorId);
-            default: throw new RuntimeException("Неизвестная команда сортировки!");
-        }
+        directorDbStorage.checkDbHasId(directorDbStorage.CHECK_DIRECTOR_IN_DB, directorId, directorDbStorage.errorMessage);
+        return switch (typeSort) {
+            case "year" -> filmDbStorage.getFilmsSortedByYear(directorId);
+            case "likes" -> filmDbStorage.getFilmsSortedByLikes(directorId);
+            default -> throw new RuntimeException("Неизвестная команда сортировки!");
+        };
     }
 
     public Collection<Film> getFilmByQuery(String query, String by) {
         List<String> searchBy = Arrays.stream(by.split(",")).toList();
-        searchBy.stream()
-                .filter(option -> !option.equals("title") || !option.equals("director"))
-                .findFirst()
-                .orElseThrow(() -> new ValidationException("Переданные параметры неверные!"));
+        boolean allValid = searchBy.stream()
+                .allMatch(option -> option.equals("title") || option.equals("director"));
+        if (!allValid) {
+            throw new ValidationException("Переданные параметры неверные!");
+        }
         return filmDbStorage.getFilmByQuery(query, by);
     }
 }
