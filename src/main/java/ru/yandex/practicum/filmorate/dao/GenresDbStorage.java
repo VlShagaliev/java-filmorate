@@ -13,8 +13,7 @@ import java.util.List;
 public class GenresDbStorage extends BaseDbStorage<Genre> {
     private static final String GET_GENRES_BY_FILM_ID = "SELECT g.id, g.name FROM genres AS g " +
             "LEFT JOIN films_genres AS fg ON g.id = fg.id_genre " +
-            "LEFT JOIN films AS f ON fg.id_film = f.id " +
-            "WHERE f.id = ? ORDER BY g.id";
+            "WHERE fg.id_film = ? ORDER BY g.id";
 
     public GenresDbStorage(JdbcTemplate jdbc, RowMapper<Genre> mapper) {
         super(jdbc, mapper);

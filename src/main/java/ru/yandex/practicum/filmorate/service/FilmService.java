@@ -5,15 +5,18 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dao.BaseDbStorage;
-import ru.yandex.practicum.filmorate.dao.FilmDbStorage;
-import ru.yandex.practicum.filmorate.dao.LikesDbStorage;
+import ru.yandex.practicum.filmorate.dao.*;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.UserEventOperation;
+import ru.yandex.practicum.filmorate.model.UserEventType;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +24,9 @@ public class FilmService {
     @Getter
     private final FilmDbStorage filmDbStorage;
     private final LikesDbStorage likesDbStorage;
+    private final GenresDbStorage genresDbStorage;
+    private final UserEventDbStorage userEventDbStorage;
+    private final DirectorDbStorage directorDbStorage;
     private final Logger log = LoggerFactory.getLogger(FilmService.class);
 
     public Collection<Film> films() {
@@ -36,24 +42,47 @@ public class FilmService {
 
     public Film update(Film film) {
         validateFilm(film);
-        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, film.getId());
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, film.getId(), FilmDbStorage.errorMessage);
         Film film1 = filmDbStorage.update(film);
         log.info("Фильм обновлен: {}", film1);
         return film1;
     }
 
+    public void deleteFilm(int id) {
+        filmDbStorage.checkDbHasId(BaseDbStorage.CHECK_FILM_IN_DB, id, FilmDbStorage.errorMessage);
+
+        filmDbStorage.deleteFilm(id);
+        log.info("Фильм удален: {}", id);
+    }
+
     public Film addLike(int id, int userId) {
         Film film = filmDbStorage.get(id);
         film.setCountLikes(likesDbStorage.addLike(id, userId));
+        userEventDbStorage.add(userId, id, UserEventType.LIKE, UserEventOperation.ADD);
         return film;
     }
 
-    public Collection<Film> popularFilms(int count) {
-        return filmDbStorage.mostPopular(count);
+    public Collection<Film> popularFilms(int count, Integer genreId, Integer year) {
+
+        if (genreId != null) {
+            genresDbStorage.checkDbHasId(genreId);
+        }
+
+        if (year != null && year < 1895) {
+            throw new ValidationException("Год должен быть не ранее 1895");
+        }
+
+        return filmDbStorage.mostPopular(count, genreId, year);
+    }
+
+    public Collection<Film> getCommonFilms(int userId, int friendId) {
+        return filmDbStorage.getCommonFilms(userId, friendId);
     }
 
     public Film deleteLike(int id, int userId) {
-        return filmDbStorage.deleteLike(id, userId);
+        Film resultFilm = filmDbStorage.deleteLike(id, userId);
+        userEventDbStorage.add(userId, id, UserEventType.LIKE, UserEventOperation.REMOVE);
+        return resultFilm;
     }
 
     private void validateFilm(Film film) {
@@ -72,12 +101,34 @@ public class FilmService {
         if (!filmDbStorage.checkRatingHasId(film.getRating().getId())) {
             throw new NotFoundException(String.format("Рейтинг с данным id = %d отсутствует в списке", film.getRating().getId()));
         }
-        /*if (filmDbStorage.checkDbHasId(film.getId())){
-            throw new ValidationException("БД уже содержит данный фильм");
-        }*/
+        if ((film.getGenres() != null && film.getGenres().length != 0)) {
+            Genre[] newGenres = Arrays.stream(film.getGenres()).distinct().toArray(Genre[]::new);
+            if (film.getGenres().length != newGenres.length) {
+                film.setGenres(newGenres);
+            }
+        }
     }
 
     public Film getFilmById(int id) {
         return filmDbStorage.get(id);
+    }
+
+    public Collection<Film> getFilmSorted(int directorId, String typeSort) {
+        directorDbStorage.checkDbHasId(directorDbStorage.CHECK_DIRECTOR_IN_DB, directorId, directorDbStorage.errorMessage);
+        return switch (typeSort) {
+            case "year" -> filmDbStorage.getFilmsSortedByYear(directorId);
+            case "likes" -> filmDbStorage.getFilmsSortedByLikes(directorId);
+            default -> throw new RuntimeException("Неизвестная команда сортировки!");
+        };
+    }
+
+    public Collection<Film> getFilmByQuery(String query, String by) {
+        List<String> searchBy = Arrays.stream(by.split(",")).toList();
+        boolean allValid = searchBy.stream()
+                .allMatch(option -> option.equals("title") || option.equals("director"));
+        if (!allValid) {
+            throw new ValidationException("Переданные параметры неверные!");
+        }
+        return filmDbStorage.getFilmByQuery(query, by);
     }
 }
