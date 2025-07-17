@@ -301,4 +301,21 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         });
         return collection;
     }
+
+    public Integer recalcRate(int filmId) {
+        String sqlGetRate = """
+                SELECT AVG(mark) AS avg_mark
+                FROM likes
+                WHERE id_film = ?
+                """;
+        String sqlUpdateRate = """
+                UPDATE films
+                SET rate = ?
+                WHERE id = ?
+                """;
+
+        Integer rate = jdbc.queryForObject(sqlGetRate, Integer.class, filmId);
+        jdbc.update(sqlUpdateRate, rate, filmId);
+        return rate;
+    }
 }

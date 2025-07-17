@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/films")
@@ -35,10 +36,11 @@ public class FilmController {
         filmService.deleteFilm(filmId);
     }
 
-    @PutMapping("/{id}/like/{userId}")
+    @PutMapping(value = {"/{id}/like/{userId}", "/{id}/like/{userId}/{mark}"})
     public Film setLike(@PathVariable("id") int id,
-                        @PathVariable("userId") int userId) {
-        return filmService.addLike(id, userId);
+                        @PathVariable("userId") int userId,
+                        @PathVariable("mark") Optional<Integer> mark) {
+        return filmService.addLike(id, userId, mark.orElse(6));
     }
 
     @GetMapping("/popular")

@@ -55,9 +55,13 @@ public class FilmService {
         log.info("Фильм удален: {}", id);
     }
 
-    public Film addLike(int id, int userId) {
+    public Film addLike(int id, int userId, int mark) {
+        if (mark < 1 || mark > 10) {
+            throw new ValidationException("Оценка должна быть от 1 до 10");
+        }
         Film film = filmDbStorage.get(id);
-        film.setCountLikes(likesDbStorage.addLike(id, userId));
+        film.setCountLikes(likesDbStorage.addLike(id, userId, mark));
+        film.setRate(filmDbStorage.recalcRate(id));
         userEventDbStorage.add(userId, id, UserEventType.LIKE, UserEventOperation.ADD);
         return film;
     }

@@ -13,7 +13,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class LikesDbStorage {
     private static final String GET_COUNT_LIKES_BY_ID = "SELECT COUNT(id_user) FROM likes WHERE id_film = ?";
-    private static final String INSERT_QUERY_LIKES = "INSERT INTO likes(id_film, id_user) VALUES (?, ?)";
+    private static final String INSERT_QUERY_LIKES = "INSERT INTO likes(id_film, id_user, mark) VALUES (?, ?, ?)";
     private static final String FIND_SIMILAR_USERS_SQL = """
     SELECT l2.id_user
     FROM likes l1
@@ -46,8 +46,8 @@ public class LikesDbStorage {
     """;
     private final JdbcTemplate jdbc;
 
-    public Integer addLike(int filmId, int userId) {
-        jdbc.update(INSERT_QUERY_LIKES, filmId, userId);
+    public Integer addLike(int filmId, int userId, int mark) {
+        jdbc.update(INSERT_QUERY_LIKES, filmId, userId, mark);
         return getLike(filmId);
     }
 

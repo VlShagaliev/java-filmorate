@@ -26,6 +26,7 @@ public class Film {
     @Min(value = 1, message = "Продолжительность фильма должна быть положительной")
     private int duration;
     private Integer countLikes;
+    private Integer rate;
     private Genre[] genres;
     @JsonProperty(value = "mpa")
     private Rating rating;

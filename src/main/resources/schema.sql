@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS films (
     description VARCHAR(200),
     releaseDate DATE,
     duration INTEGER,
-    id_rating INTEGER REFERENCES ratings(id)
+    id_rating INTEGER REFERENCES ratings(id),
+    rate INTEGER
 );
 
 -- Таблица users
@@ -41,7 +42,8 @@ CREATE TABLE IF NOT EXISTS friends (
 CREATE TABLE IF NOT EXISTS likes (
     id SERIAL PRIMARY KEY,
     id_film INTEGER REFERENCES films(id) ON DELETE CASCADE,
-    id_user INTEGER REFERENCES users(id) ON DELETE CASCADE
+    id_user INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    mark INTEGER
 );
 
 -- Таблица films_genres
