@@ -46,7 +46,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 LEFT JOIN likes l3 ON f.id = l3.id_film
                 LEFT JOIN ratings r ON r.id = f.id_rating
                 GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating, r.name
-                ORDER BY likes_count DESC
+                ORDER BY f.rate DESC
             """;
     public static final String errorMessage = "Фильм с данным id = %d отсутствует в списке";
 
