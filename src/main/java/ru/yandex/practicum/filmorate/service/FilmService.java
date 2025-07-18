@@ -119,9 +119,10 @@ public class FilmService {
 
     public Collection<Film> getFilmSorted(int directorId, String typeSort) {
         directorDbStorage.checkDbHasId(directorDbStorage.CHECK_DIRECTOR_IN_DB, directorId, directorDbStorage.errorMessage);
-        return switch (typeSort) {
+        return switch (typeSort.toLowerCase()) {
             case "year" -> filmDbStorage.getFilmsSortedByYear(directorId);
             case "likes" -> filmDbStorage.getFilmsSortedByLikes(directorId);
+            case "rate" -> filmDbStorage.getFilmsSortedByRate(directorId);
             default -> throw new RuntimeException("Неизвестная команда сортировки!");
         };
     }
@@ -129,7 +130,7 @@ public class FilmService {
     public Collection<Film> getFilmByQuery(String query, String by) {
         List<String> searchBy = Arrays.stream(by.split(",")).toList();
         boolean allValid = searchBy.stream()
-                .allMatch(option -> option.equals("title") || option.equals("director"));
+                .allMatch(option -> option.equals("title") || option.equals("director") || option.equals("rate"));
         if (!allValid) {
             throw new ValidationException("Переданные параметры неверные!");
         }

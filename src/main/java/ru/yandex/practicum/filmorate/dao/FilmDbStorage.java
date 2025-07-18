@@ -38,7 +38,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "WHERE f.id = ? " +
             "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating ";
     private static final String FIND_COMMON_QUERY = """
-                SELECT f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating,
+                SELECT f.*,
                     r.name AS rating_name, COUNT(l3.id_user) AS likes_count
                 FROM films f
                 JOIN likes l1 ON f.id = l1.id_film AND l1.id_user = ?
@@ -250,6 +250,12 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     public Collection<Film> getFilmsSortedByLikes(int directorId) {
         String likesCount = "likes_count DESC";
+        Collection<Film> collection = jdbc.query(querySqlSort + likesCount, mapper, directorId);
+        return pullGenresAndDirector(collection);
+    }
+
+    public Collection<Film> getFilmsSortedByRate(int directorId) {
+        String likesCount = "f.rate DESC";
         Collection<Film> collection = jdbc.query(querySqlSort + likesCount, mapper, directorId);
         return pullGenresAndDirector(collection);
     }

@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS films_genres (
 -- Таблица director
 CREATE TABLE IF NOT EXISTS director (
     id SERIAL PRIMARY KEY,
-    name varchar
+    name varchar NOT NULL
 );
 
 -- Таблица film_director
