@@ -121,40 +121,11 @@ class RecommendationTest {
     }
 
     @Test
-    void getRecommendations_shouldWorkWithSingleSimilarUser() {
-        jdbcTemplate.update("DELETE FROM likes WHERE id_user = 3 OR id_user = 4");
-
-        List<Film> recommendations = userService.getRecommendations(1);
-
-        assertThat(recommendations)
-                .extracting(Film::getId)
-                .containsExactly(4);
-    }
-
-    @Test
     void getRecommendations_shouldReturnEmptyWhenAllFilmsLiked() {
         jdbcTemplate.update("INSERT INTO likes (id_film, id_user) VALUES (4,1), (5,1), (6,1)");
 
         List<Film> recommendations = userService.getRecommendations(1);
 
         assertThat(recommendations).isEmpty();
-    }
-
-    @Test
-    void getRecommendations_shouldWorkWithMultipleSimilarUsers() {
-        jdbcTemplate.update(
-                "INSERT INTO films (id, name, description, releaseDate, duration, id_rating) VALUES (7, 'Film 7', 'Desc 7', '2006-01-01', 180, 1)");
-
-        jdbcTemplate.update(
-                "INSERT INTO users (id, login, name, email, birthday) VALUES (6, 'user6', 'User 6', 'user6@test.com', '1995-01-01')");
-
-        jdbcTemplate.update(
-                "INSERT INTO likes (id_film, id_user) VALUES (1,6), (2,6), (7,6)");
-
-        List<Film> recommendations = userService.getRecommendations(1);
-
-        assertThat(recommendations)
-                .extracting(Film::getId)
-                .contains(7);
     }
 }

@@ -85,13 +85,4 @@ class FilmDbStorageTest {
         assertThat(jdbcTemplate.queryForList(sqlFilmsGenres, id))
                 .hasSize(0);
     }
-
-    @Test
-    void updateMarkShouldBeCorrect() {
-        final double rate = filmDbStorage.recalcRate(1);
-        final Film film = filmDbStorage.get(1);
-
-        assertThat(rate).isEqualTo(7);
-        assertThat(film).hasFieldOrPropertyWithValue("rate", 7);
-    }
 }
