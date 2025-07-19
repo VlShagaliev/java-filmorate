@@ -38,7 +38,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             "WHERE f.id = ? " +
             "GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating ";
     private static final String FIND_COMMON_QUERY = """
-                SELECT f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating,
+                SELECT f.*,
                     r.name AS rating_name, COUNT(l3.id_user) AS likes_count
                 FROM films f
                 JOIN likes l1 ON f.id = l1.id_film AND l1.id_user = ?
@@ -46,7 +46,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 LEFT JOIN likes l3 ON f.id = l3.id_film
                 LEFT JOIN ratings r ON r.id = f.id_rating
                 GROUP BY f.id, f.name, f.description, f.releaseDate, f.duration, f.id_rating, r.name
-                ORDER BY likes_count DESC
+                ORDER BY f.rate DESC
             """;
     public static final String errorMessage = "Фильм с данным id = %d отсутствует в списке";
 
@@ -208,7 +208,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
         sql.append("""
                 GROUP BY f.id, r.name
-                ORDER BY likes_count DESC
+                ORDER BY f.rate DESC, likes_count DESC
                 LIMIT
                 """).append(count);
 
@@ -250,6 +250,12 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     public Collection<Film> getFilmsSortedByLikes(int directorId) {
         String likesCount = "likes_count DESC";
+        Collection<Film> collection = jdbc.query(querySqlSort + likesCount, mapper, directorId);
+        return pullGenresAndDirector(collection);
+    }
+
+    public Collection<Film> getFilmsSortedByRate(int directorId) {
+        String likesCount = "f.rate DESC";
         Collection<Film> collection = jdbc.query(querySqlSort + likesCount, mapper, directorId);
         return pullGenresAndDirector(collection);
     }
@@ -300,5 +306,22 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             film.setCountLikes(likesDbStorage.getLike(film.getId()));
         });
         return collection;
+    }
+
+    public Double recalcRate(int filmId) {
+        String sqlGetRate = """
+                SELECT AVG(mark) AS avg_mark
+                FROM likes
+                WHERE id_film = ?
+                """;
+        String sqlUpdateRate = """
+                UPDATE films
+                SET rate = ?
+                WHERE id = ?
+                """;
+
+        Double rate = jdbc.queryForObject(sqlGetRate, Double.class, filmId);
+        jdbc.update(sqlUpdateRate, rate, filmId);
+        return rate;
     }
 }
