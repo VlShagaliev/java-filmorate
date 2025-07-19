@@ -10,7 +10,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import ru.yandex.practicum.filmorate.dao.mappers.FilmRowMapper;
-import ru.yandex.practicum.filmorate.model.Film;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -58,7 +57,7 @@ class FilmDbStorageTest {
     }
 
     @Test
-    void deleteFilm() throws IOException {
+    void deleteFilm() {
         final String sqlFilm = """
                 SELECT *
                 FROM films
