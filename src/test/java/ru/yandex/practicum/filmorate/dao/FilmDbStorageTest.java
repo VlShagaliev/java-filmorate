@@ -88,7 +88,7 @@ class FilmDbStorageTest {
 
     @Test
     void updateMarkShouldBeCorrect() {
-        final int rate = filmDbStorage.recalcRate(1);
+        final double rate = filmDbStorage.recalcRate(1);
         final Film film = filmDbStorage.get(1);
 
         assertThat(rate).isEqualTo(7);

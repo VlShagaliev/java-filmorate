@@ -108,18 +108,14 @@ public class UserService {
     }
 
     public List<Film> getRecommendations(int userId) {
-
         userDbStorage.checkDbHasId(userId);
 
         List<Integer> similarUserIds = likesDbStorage.findUsersWithSimilarLikes(userId);
-
         if (similarUserIds.isEmpty()) {
             return List.of();
         }
 
-        List<Integer> recommendedFilmIds = likesDbStorage.getRecommendedFilms(userId, similarUserIds);
-
-        return recommendedFilmIds.stream()
+        return likesDbStorage.getRecommendedFilms(userId, similarUserIds).stream()
                 .map(filmDbStorage::get)
                 .collect(Collectors.toList());
     }

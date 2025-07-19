@@ -1,13 +1,13 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/films")
@@ -37,10 +37,15 @@ public class FilmController {
     }
 
     @PutMapping(value = {"/{id}/like/{userId}", "/{id}/like/{userId}/{mark}"})
-    public Film setLike(@PathVariable("id") int id,
-                        @PathVariable("userId") int userId,
-                        @PathVariable("mark") Optional<Integer> mark) {
-        return filmService.addLike(id, userId, mark.orElse(6));
+    public Film setLike(
+            @PathVariable("id") int id,
+            @PathVariable("userId") int userId,
+            @PathVariable(name = "mark", required = false) Double mark) {
+
+        if (mark != null && (mark < 1 || mark > 10)) {
+            throw new ValidationException("Оценка должна быть от 1 до 10");
+        }
+        return filmService.addLike(id, userId, mark != null ? mark : 6.0);
     }
 
     @GetMapping("/popular")

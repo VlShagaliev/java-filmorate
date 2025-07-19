@@ -208,7 +208,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
         sql.append("""
                 GROUP BY f.id, r.name
-                ORDER BY likes_count DESC
+                ORDER BY f.rate DESC, likes_count DESC
                 LIMIT
                 """).append(count);
 
@@ -308,7 +308,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return collection;
     }
 
-    public Integer recalcRate(int filmId) {
+    public Double recalcRate(int filmId) {
         String sqlGetRate = """
                 SELECT AVG(mark) AS avg_mark
                 FROM likes
@@ -320,7 +320,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 WHERE id = ?
                 """;
 
-        Integer rate = jdbc.queryForObject(sqlGetRate, Integer.class, filmId);
+        Double rate = jdbc.queryForObject(sqlGetRate, Double.class, filmId);
         jdbc.update(sqlUpdateRate, rate, filmId);
         return rate;
     }

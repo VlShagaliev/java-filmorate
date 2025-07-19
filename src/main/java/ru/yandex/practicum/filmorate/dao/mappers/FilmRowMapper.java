@@ -23,7 +23,7 @@ public class FilmRowMapper implements RowMapper<Film> {
         rating.setName(resultSet.getString("rating_name"));
         film.setCountLikes(resultSet.getInt("likes_count"));
         film.setRating(rating);
-        film.setRate(resultSet.getInt("rate"));
+        film.setRate(resultSet.getDouble("rate"));
         return film;
     }
 }

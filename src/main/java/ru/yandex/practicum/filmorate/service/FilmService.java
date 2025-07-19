@@ -55,7 +55,7 @@ public class FilmService {
         log.info("Фильм удален: {}", id);
     }
 
-    public Film addLike(int id, int userId, int mark) {
+    public Film addLike(int id, int userId, double mark) {
         if (mark < 1 || mark > 10) {
             throw new ValidationException("Оценка должна быть от 1 до 10");
         }
@@ -118,7 +118,7 @@ public class FilmService {
     }
 
     public Collection<Film> getFilmSorted(int directorId, String typeSort) {
-        directorDbStorage.checkDbHasId(directorDbStorage.CHECK_DIRECTOR_IN_DB, directorId, directorDbStorage.errorMessage);
+        directorDbStorage.checkDbHasId(DirectorDbStorage.CHECK_DIRECTOR_IN_DB, directorId, DirectorDbStorage.errorMessage);
         return switch (typeSort.toLowerCase()) {
             case "year" -> filmDbStorage.getFilmsSortedByYear(directorId);
             case "likes" -> filmDbStorage.getFilmsSortedByLikes(directorId);
