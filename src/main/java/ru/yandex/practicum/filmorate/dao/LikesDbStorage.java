@@ -13,41 +13,35 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class LikesDbStorage {
     private static final String GET_COUNT_LIKES_BY_ID = "SELECT COUNT(id_user) FROM likes WHERE id_film = ?";
-    private static final String INSERT_QUERY_LIKES = "INSERT INTO likes(id_film, id_user) VALUES (?, ?)";
+    private static final String INSERT_QUERY_LIKES = "INSERT INTO likes(id_film, id_user, mark) VALUES (?, ?, ?)";
     private static final String FIND_SIMILAR_USERS_SQL = """
-    SELECT l2.id_user
-    FROM likes l1
-    JOIN likes l2 ON l1.id_film = l2.id_film AND l1.id_user != l2.id_user
-    WHERE l1.id_user = ?
-    GROUP BY l2.id_user
-    HAVING COUNT(l2.id_film) = (
-        SELECT COUNT(l2.id_film)
-        FROM likes l1
-        JOIN likes l2 ON l1.id_film = l2.id_film AND l1.id_user != l2.id_user
-        WHERE l1.id_user = ?
-        GROUP BY l2.id_user
-        ORDER BY COUNT(l2.id_film) DESC
-        LIMIT 1
-    )
-    ORDER BY COUNT(l2.id_film) DESC
-    LIMIT 5
-    """;
+            SELECT l2.id_user
+            FROM likes l1
+            JOIN likes l2 ON l1.id_film = l2.id_film AND l1.id_user != l2.id_user
+            WHERE l1.id_user = ?
+            GROUP BY l2.id_user
+            HAVING ABS(AVG(l1.mark) - AVG(l2.mark)) <= 0.5
+            ORDER BY COUNT(l2.id_film) DESC, ABS(AVG(l1.mark) - AVG(l2.mark)) ASC
+            LIMIT 5
+            """;
+
     private static final String GET_RECOMMENDATIONS_SQL = """
-    SELECT f.id
-    FROM films f
-    JOIN likes l ON f.id = l.id_film
-    WHERE l.id_user IN (:similarUserIds)
-    AND NOT EXISTS (
-        SELECT 1 FROM likes WHERE id_film = f.id AND id_user = :userId
-    )
-    GROUP BY f.id
-    ORDER BY COUNT(l.id_user) DESC, f.id
-    LIMIT 10
-    """;
+            SELECT f.id
+            FROM films f
+            JOIN likes l ON f.id = l.id_film
+            WHERE l.id_user IN (:similarUserIds)
+            AND NOT EXISTS (
+                SELECT 1 FROM likes WHERE id_film = f.id AND id_user = :userId
+            )
+            GROUP BY f.id
+            ORDER BY AVG(l.mark) DESC, COUNT(l.id_user) DESC
+            LIMIT 10
+            """;
+
     private final JdbcTemplate jdbc;
 
-    public Integer addLike(int filmId, int userId) {
-        jdbc.update(INSERT_QUERY_LIKES, filmId, userId);
+    public Integer addLike(int filmId, int userId, double mark) {
+        jdbc.update(INSERT_QUERY_LIKES, filmId, userId, mark);
         return getLike(filmId);
     }
 
@@ -60,7 +54,7 @@ public class LikesDbStorage {
     }
 
     public List<Integer> findUsersWithSimilarLikes(int userId) {
-        return jdbc.queryForList(FIND_SIMILAR_USERS_SQL, Integer.class, userId, userId);
+        return jdbc.queryForList(FIND_SIMILAR_USERS_SQL, Integer.class, userId);
     }
 
     public List<Integer> getRecommendedFilms(int userId, List<Integer> similarUserIds) {

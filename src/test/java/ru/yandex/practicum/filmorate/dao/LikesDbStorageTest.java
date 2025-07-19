@@ -9,22 +9,23 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
-import ru.yandex.practicum.filmorate.dao.mappers.FilmRowMapper;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@Import({FilmDbStorage.class, FilmRowMapper.class})
-class FilmDbStorageTest {
-    private final JdbcTemplate jdbcTemplate;
-    private final FilmDbStorage filmDbStorage;
+@Import({LikesDbStorage.class})
+class LikesDbStorageTest {
+    final JdbcTemplate jdbcTemplate;
+    final LikesDbStorage likesDbStorage;
     static String sqlClearTables;
 
     @BeforeAll
@@ -43,45 +44,26 @@ class FilmDbStorageTest {
                 INSERT INTO users
                     (login, name, email, birthday)
                 VALUES
-                    ('login1', 'name1', 'user1@domain.com', '2001-01-01'),
-                    ('login2', 'name2', 'user2@domain.com', '2002-02-02');
-                INSERT INTO likes
-                    (id_film, id_user, mark)
-                VALUES
-                    (1, 1, 6),
-                    (1, 2, 8);
-                INSERT INTO films_genres (id_film, id_genre) VALUES (1, 1);
+                    ('login1', 'name1', 'user1@domain.com', '2001-01-01');
                 """;
         jdbcTemplate.update(sqlClearTables);
         jdbcTemplate.update(sqlAddTestContent);
     }
 
     @Test
-    void deleteFilm() {
-        final String sqlFilm = """
-                SELECT *
-                FROM films
-                WHERE id = ?
-                """;
-        final String sqlLikes = """
+    void addLike() {
+        String sql = """
                 SELECT *
                 FROM likes
-                WHERE id_film = ?
                 """;
-        final String sqlFilmsGenres = """
-                SELECT *
-                FROM films_genres
-                WHERE id_film = ?
-                """;
-        final int id = 1;
 
-        filmDbStorage.deleteFilm(id);
+        likesDbStorage.addLike(1, 1, 1);
+        List<Map<String, Object>> result = jdbcTemplate.queryForList(sql);
 
-        assertThat(jdbcTemplate.queryForList(sqlFilm, id))
-                .hasSize(0);
-        assertThat(jdbcTemplate.queryForList(sqlLikes, id))
-                .hasSize(0);
-        assertThat(jdbcTemplate.queryForList(sqlFilmsGenres, id))
-                .hasSize(0);
+        assertThat(result)
+                .hasSize(1)
+                .first()
+                .hasToString("{ID=1, ID_FILM=1, ID_USER=1, MARK=1}");
+
     }
 }

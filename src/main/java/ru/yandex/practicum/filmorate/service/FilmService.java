@@ -55,9 +55,13 @@ public class FilmService {
         log.info("Фильм удален: {}", id);
     }
 
-    public Film addLike(int id, int userId) {
+    public Film addLike(int id, int userId, double mark) {
+        if (mark < 1 || mark > 10) {
+            throw new ValidationException("Оценка должна быть от 1 до 10");
+        }
         Film film = filmDbStorage.get(id);
-        film.setCountLikes(likesDbStorage.addLike(id, userId));
+        film.setCountLikes(likesDbStorage.addLike(id, userId, mark));
+        film.setRate(filmDbStorage.recalcRate(id));
         userEventDbStorage.add(userId, id, UserEventType.LIKE, UserEventOperation.ADD);
         return film;
     }
@@ -114,10 +118,11 @@ public class FilmService {
     }
 
     public Collection<Film> getFilmSorted(int directorId, String typeSort) {
-        directorDbStorage.checkDbHasId(directorDbStorage.CHECK_DIRECTOR_IN_DB, directorId, directorDbStorage.errorMessage);
-        return switch (typeSort) {
+        directorDbStorage.checkDbHasId(DirectorDbStorage.CHECK_DIRECTOR_IN_DB, directorId, DirectorDbStorage.errorMessage);
+        return switch (typeSort.toLowerCase()) {
             case "year" -> filmDbStorage.getFilmsSortedByYear(directorId);
             case "likes" -> filmDbStorage.getFilmsSortedByLikes(directorId);
+            case "rate" -> filmDbStorage.getFilmsSortedByRate(directorId);
             default -> throw new RuntimeException("Неизвестная команда сортировки!");
         };
     }
@@ -125,7 +130,7 @@ public class FilmService {
     public Collection<Film> getFilmByQuery(String query, String by) {
         List<String> searchBy = Arrays.stream(by.split(",")).toList();
         boolean allValid = searchBy.stream()
-                .allMatch(option -> option.equals("title") || option.equals("director"));
+                .allMatch(option -> option.equals("title") || option.equals("director") || option.equals("rate"));
         if (!allValid) {
             throw new ValidationException("Переданные параметры неверные!");
         }
